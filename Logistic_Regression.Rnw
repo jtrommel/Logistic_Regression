@@ -1,0 +1,133 @@
+\documentclass{tufte-book}
+\usepackage{graphicx}  % werken met figuren
+\usepackage{gensymb} % werken met wetenschappelijke eenheden\usepackage{geometry}
+\usepackage{changepage} % http://ctan.org/pkg/changepage
+\usepackage[dutch,british]{babel} % instelling van de taal (woordsplitsing, spellingscontrole)
+\usepackage[parfill]{parskip} % Paragrafen gescheiden door witte lijn en geen inspringing
+\usepackage[font=small,skip=3pt]{caption} % Minder ruimte tussen figuur/table en ondertitel. Ondertitel klein
+\usepackage{capt-of}
+\usepackage{indentfirst}
+\setlength{\parindent}{0.7cm}
+\usepackage{enumitem} % Laat enumerate werken met letters
+\usepackage{url}
+\usepackage{lipsum}
+\setkeys{Gin}{width=\linewidth,totalheight=\textheight,keepaspectratio}
+% Prints a trailing space in a smart way.
+\usepackage{xspace}
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+%   General parameters, for ALL pages:
+    \renewcommand{\topfraction}{0.9}	% max fraction of floats at top
+    \renewcommand{\bottomfraction}{0.9}	% max fraction of floats at bottom
+%   Parameters for TEXT pages (not float pages):
+    \setcounter{topnumber}{2}
+    \setcounter{bottomnumber}{2}
+    \setcounter{totalnumber}{4}     % 2 may work better
+    \renewcommand{\textfraction}{0.1}	% allow minimal text w. figs
+%   Parameters for FLOAT pages (not text pages):
+    \renewcommand{\floatpagefraction}{0.8}	% require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+\setcounter{secnumdepth}{3}
+
+\newcommand{\tthdump}[1]{#1}
+
+\newcommand{\openepigraph}[2]{
+  \begin{fullwidth}
+  \sffamily\large
+    \begin{doublespace}
+      \noindent\allcaps{#1}\\ % epigraph
+      \noindent\allcaps{#2} % author
+    \end{doublespace}
+  \end{fullwidth}
+}
+
+
+\usepackage{makeidx}
+\makeindex
+
+\title{Logistic Regression}
+\author{Jan Trommelmans}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE,prefix.string=LR}
+\setkeys{Gin}{width=1.1\marginparwidth} %% Sweave
+
+<<echo=FALSE>>=
+library(tidyverse)
+library(scatterplot3d)
+@
+
+% Setting the ggplot theme:
+<<echo=FALSE>>=
+JT.theme <- theme(panel.border = element_rect(fill = NA, colour = "gray10"),
+                  panel.background = element_blank(),
+                  panel.grid.major = element_line(colour = "gray85"),
+                  panel.grid.minor = element_line(colour = "gray85"),
+                  panel.grid.major.x = element_line(colour = "gray85"),
+                  axis.text = element_text(size = 8 , face = "bold"),
+                  axis.title = element_text(size = 9 , face = "bold"),
+                  plot.title = element_text(size = 12 , face = "bold"),
+                  strip.text = element_text(size = 8 , face = "bold"),
+                  strip.background = element_rect(colour = "black"),
+                  legend.text = element_text(size = 8),
+                  legend.title = element_text(size = 9 , face = "bold"),
+                  legend.background = element_rect(fill = "white"),
+                  legend.key = element_rect(fill = "white"))
+@
+
+% Functions
+
+\frontmatter
+\chapter*{Logistic Regression}
+
+\chapter*{Introduction}
+
+\mainmatter
+
+\chapter{Pearson: O-ring failure}
+
+\section{Logistic regression}
+
+<<label=scatter,fig=TRUE,include=FALSE, echo=FALSE>>=
+O.ring <- data.frame(tempC=c(12, 13, 14, 17, 18, 19, 19, 19, 20, 20.5, 21, 21, 21, 21, 22, 23, 24, 24, 25, 25, 25.5, 26, 27, 27.2), failure=c(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0))
+O.ring$tempF <- O.ring$tempC*1.8 + 32
+ggplot(data=O.ring) + 
+  geom_point(aes(x=tempF, y=failure)) +
+    labs(title="Scatterplot O-ring failure", xlab="temperature (F)", ylab="failure: 1=yes, 0=no") +
+  JT.theme
+@
+
+\begin{marginfigure}
+\includegraphics[width=1\textwidth]{LR-scatter}
+\caption{Scatterplot of O-ring failure as a function of temperature}
+\label{fig:scatter}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{marginfigure}
+
+<<label=scatterplusmodel,fig=TRUE,include=FALSE, echo=FALSE>>=
+modF <- glm(failure~tempF,data=O.ring,family=binomial(link="logit"))
+modelF <- data.frame(x=seq(52, 82, 1), y=0)
+modelF$y <- 1/(1+exp(-(modF$coefficients[1] + modF$coefficients[2]*modelF$x)))
+ggplot(data=O.ring, aes(x=tempF, y=failure)) + 
+  geom_point() + 
+  geom_line(data = modelF, aes(x=x, y=y), colour="red") +
+  JT.theme            
+@
+
+<<>>=
+summary(modF)
+@
+\begin{marginfigure}
+\includegraphics[width=1\textwidth]{LR-scatterplusmodel}
+\caption{Scatterplot and logistic regression model}
+\label{fig:scatterplusmodel}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{marginfigure}
+
+\end{document}
