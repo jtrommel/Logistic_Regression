@@ -86,9 +86,116 @@ JT.theme <- theme(panel.border = element_rect(fill = NA, colour = "gray10"),
 \frontmatter
 \chapter*{Logistic Regression}
 
-\chapter*{Introduction}
-
 \mainmatter
+\chapter{Why do we need a logistic regression?}
+
+\section{Problems with a linear regression}
+
+\subsection{Y is a discrete variable}
+When the response variable $Y$ in \emph{qualitative} rather than \emph{quantitative}, linear regression is not the best method to link $Y$ with the controllable factors $x_{i}$\sidenote{Y (in capital) is a probability variable, x (lower case) is known}. Linear regression is well suited for \emph{continuous} variables. Logistic regression is better in the case of \emph{discrete} variables.
+
+Let us start with the situation where the response variable $Y$ can only have two (discrete) levels ''0" and ''1", and that there is only one controllabel factor $x$. This points us into the direction of a \emph{dichotomous} event: the image of $Y$ is $\{0,1\}$, with $P[Y=1]=\pi$ and $P[Y=0]=1-\pi$. We do not know all values of $Y$, but we have a sample (size=$n$) of $n$ pairs $(x_{i}, Y_{i})$. However, the probability $\pi$ could be different for differend values of $x_{i}$:
+
+\begin{equation}
+P[Y_{i}=1]=\pi_{i} \quad and \quad P[Y_{i}=0]=1-\pi_{i}
+\end{equation}
+
+The expected value of $Y_{i}$ is
+
+\begin{equation}
+E(Y_{i})=1\pi_{i} + 0(1-\pi_{i})=\pi_{i}
+\label{eq:meanpi}
+\end{equation}
+
+When we use a \emph{linear regression} we take it that the relation between $Y$ and $x$ can be written as:
+
+\begin{equation}
+Y=\beta_{0} + \beta_{1}x
+\end{equation}
+
+The pairs $(x_{i}, Y_{i})$ will not neccesarily lie on the theoretical regression line: there will be some error $\epsilon_{i}$
+
+\begin{equation}
+Y_{i}=\beta_{0} + \beta_{1}x_{i} + \epsilon_{i}
+\end{equation}
+
+\subsection{Problem 1: limits on the possible values of the linear regression model}
+
+When we calculate the expected value of $Y_{i}$ we get:
+
+\begin{equation}
+E(Y_{i})=E\left( \beta_{0} + \beta_{1}x_{i} + \epsilon_{i}  \right) = \beta_{0} + \beta_{1}x_{i}
+\label{eq:meanlin}
+\end{equation}
+
+From \ref{eq:meanpi} and \ref{eq:meanlin} it follows that
+
+\begin{equation}
+\pi_{i}=\beta_{0} + \beta_{1}x_{i}
+\label{eq:linkpimean}
+\end{equation}
+
+This means that all the values of $\beta_{0} + \beta_{1}x_{i}$ \emph{must} lie between 0 and 1, because $\pi_{i}$ is a probability. 
+
+\subsection{Problem 2: the error term $\epsilon_{i}$ is not normally distributed}
+
+From \ref{eq:linkpimean} it follows that the error can only have two values:
+
+\begin{equation}
+\begin{split}
+\epsilon_{i}&=1-\beta_{0} - \beta_{1}x_{i} \quad if \quad Y_{i}=1 \\
+\epsilon_{i}&=-\beta_{0} - \beta_{1}x_{i} \quad if \quad Y_{i}=0
+\end{split}
+\end{equation}
+
+With only two possible values, $\epsilon_{i}$ cannot be normally distributed.
+
+\subsection{Problem 3: the variance of the error $\epsilon_{i}$ is not constant}
+
+The variance of the error is equal to the variance of the response variable, because
+\begin{equation}
+var(\epsilon_{i})=var(Y_{i}-\pi_{i})=var(Y_{i}) \quad because \quad \pi_{i}=cnst
+\end{equation}
+
+The variance of the response variable is:
+\begin{equation}
+\begin{split}
+var(Y_{i}) & \overset{\Delta}{=} E\left( (Y_{i} - E\left( Y_{i} \right))^{2}  \right) \\
+& = (1-\pi_{i})^{2}\pi_{i}+(0-\pi_{i})^{2}(1-\pi_{i}) \\
+& = (1-\pi_{i})[(1-\pi_{i})\pi_{i}+\pi_{i}^{2}] \\
+& = (1-\pi_{i})\pi_{i} \\
+& = E(1-Y_{i})E(Y_{i})
+\end{split}
+\end{equation}
+
+The variance of the response variable $Y_{i}$ (and thus of the error $\epsilon_{i}$) depends on the mean of $Y_{i}$, and consequently is not a constant.
+
+\subsection{Conclusion}
+\newthought{The three problems} cited above make it clear that in general, the basic conditions for a linear regression are \emph{not met} when the response variable is dichotomous.
+
+\section{Logistic regression}
+
+\subsection{The logit function}
+
+Instead of using a linear relation between the response variable $Y$ and the control variable x, we can use another function. This function should of course remove all, or most, of the problems cited above. The \emph{logit}-function is often used.
+
+\begin{equation}
+\begin{split}
+E(Y_{i})&= \beta_{0} + \beta_{1}x_{i} \quad (linear) \\
+E(Y_{i})&= \frac{e^{\beta_{0}+\beta_{1}x_{i}}}{1+e^{\beta_{0}+\beta_{1}x_{i}}} \quad (logit) 
+\end{split}
+\end{equation}
+
+From this definition it follows that
+\begin{equation}
+e^{\beta_{0}+\beta_{1}x_{i}}=\frac{E(Y_{i})}{(1-E(Y_{i})}
+\end{equation}
+
+This is called the \emph{odds ratio}.
+
+\subsection{Finding the coefficients $\beta_{0}$ and $\beta_{1}$}
+
+In linear regression we determined the coefficients $\beta_{0}$ and $\beta_{1}$ using the \emph{Least Squares} criterium.
 
 \chapter{Pearson: O-ring failure}
 
