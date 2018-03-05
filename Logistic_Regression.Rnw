@@ -120,7 +120,7 @@ grid.arrange(p1, p2, p3, ncol=3)
 @
 
 \begin{figure}
-\includegraphics[width=1\textwidth, height=250pt]{LR-distinction}
+\includegraphics[width=200pt, height=200pt]{LR-distinction}
 \caption{Some situations}
 \label{fig:distinct}
 \setfloatalignment{b}% forces caption to be bottom-aligned
@@ -240,6 +240,45 @@ We can see that
 \frac{e^{\beta_{0}+\beta_{1}x}}{1+e^{\beta_{0}+\beta_{1}x}}(x=0) &= \frac{e^{\beta_{0}}}{1+e^{\beta_{0}}}
 \end{split}
 \end{equation}
+
+The parameter $\beta_{0}$ is a \emph{place} factor (Figure~\ref{fig:place_and_from}-left): for positive values of $\beta_{0}$ it shifts the graph to the left, for negative values to the right. Parameter $\beta_{1}$ is a \emph{form} factor (Figure~\ref{fig:place_and_from}-right): for high values of $\beta_{1}$ it squeezes the graph to the center, for low values it streches the graph. Negative values of $\beta_{1}$ makes the sigmoid function go from high (1) for negative values of $x$ to low (0) for positive values of $x$.
+
+<<label=place_and_form,fig=TRUE,include=FALSE, echo=FALSE>>=
+df_pandf <- data.frame(x=seq(-10,10,0.5),y1=0, y2=0, y3=0, y4=0, y5=0, y6=0)
+df_pandf$y1 <- 1/(1+exp(-5-df_pandf$x))
+df_pandf$y2 <- 1/(1+exp(0-df_pandf$x))
+df_pandf$y3 <- 1/(1+exp(+5-df_pandf$x))
+p1 <- ggplot(data=df_pandf, aes(x=x)) + 
+  geom_line(aes(y=y1), color="red") +
+  geom_line(aes(y=y2), color="black") +
+  geom_line(aes(y=y3), color="blue") +
+  labs(title="beta0 changes place", xlab="x", ylab="y") +
+  geom_text(x=-8, y=0.25, label="+5", color="red") +
+  geom_text(x=-3, y=0.25, label="0", color="black") +
+  geom_text(x=2.3, y=0.25, label="-5", color="blue") +
+  JT.theme
+df_pandf$y4 <- 1/(1+exp(0-2.5*df_pandf$x))
+df_pandf$y5 <- 1/(1+exp(0-1*df_pandf$x))
+df_pandf$y6 <- 1/(1+exp(0-0.25*df_pandf$x))
+p2 <- ggplot(data=df_pandf, aes(x=x)) + 
+  geom_line(aes(y=y4), color="red") +
+  geom_line(aes(y=y5), color="black") +
+  geom_line(aes(y=y6), color="blue") +
+  geom_text(x=1, y=0.25, label="+5", color="red") +
+  geom_text(x=-2, y=0.25, label="0", color="black") +
+  geom_text(x=-6, y=0.25, label="-5", color="blue") +
+  labs(title="beta1 changes form", xlab="x", ylab="y") +
+  JT.theme
+grid.arrange(p1, p2, ncol=2)
+@
+
+\begin{figure}
+\includegraphics[width=1\textwidth, height=200pt]{LR-place_and_form}
+\caption{Place and form}
+\label{fig:place_and_form}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{figure}
+
 
 \subsection{Finding the coefficients $\beta_{0}$ and $\beta_{1}$}
 
