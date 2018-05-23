@@ -358,9 +358,55 @@ grid.arrange(p1, p2, p3, ncol=3)
 
 \subsection{Finding the coefficients $\beta_{0}$ and $\beta_{1}$}
 
-In linear regression we determined the coefficients $\beta_{0}$ and $\beta_{1}$ using the \emph{Least Squares} criterium. However, because we start from one set $(x_{i}, y_{i})$ of experimental results, we cannot find the ''true" values of $\beta_{0}$ and $\beta_{1}$: we will find $b_{0}$ and $b_{1}$, one of many possible solutions. The same is true in logistical regression: based on the data of one experiment we will not find $\beta_{0}$ and $\beta_{1}$ but $b_{0}$ and $b_{1}$.
+In linear regression, because we start from one set $(x_{i}, y_{i})$ of experimental results, we cannot find the ''true" values of $\beta_{0}$ and $\beta_{1}$: we will find $b_{0}$ and $b_{1}$, one of many possible solutions. The same is true in logistical regression: based on the data of one experiment we will not find $\beta_{0}$ and $\beta_{1}$ but $b_{0}$ and $b_{1}$.
 
-In linear regression the criterium for finding $b_{0}$ and $b_{1}$ was to find a \emph{minimum} of the error $\sum_{i=1}^{i=n}(y_{i}-\hat{y}_{i})^{2}$. An analytical solution of this problem is available. In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical analysis.
+In linear regression the criterium for finding $b_{0}$ and $b_{1}$ was to find, using the Ordinary Least Squares method, a \emph{minimum} of the error which is the sum of the squares of the residuals:
+\begin{equation}
+  \sum_{i=1}^{i=n}(y_{i}-\hat{y}_{i})^{2}=\sum_{i=1}^{i=n}(r_{i})^{2} \quad with \quad r_{i}= residual_{i}
+\end{equation}
+
+An analytical solution of this problem is available. 
+
+When we accept  hypothesis 1 ($Y_{i}$ is the result of a Bernouilli experiment with probability $\pi_{i}$), then the probability distribution for $Y_{i}$ can be written as:
+\begin{equation}
+  P[Y_{i}|x_{i}]=\left[ \pi_{i}  \right]^{Y_{i}}\left[ 1 - \pi_{i}  \right]^{(1 - Y_{i})}
+\end{equation}
+
+because:
+\begin{equation}
+  \begin{split}
+  if \quad Y_{i}=1 \quad then \quad P[Y_{i} &=1|x_{i}]=\left[ \pi_{i}  \right].1 \\
+  if \quad Y_{i}=0 \quad then \quad P[Y_{i} &=0|x_{i}]=1.\left[ 1 - \pi_{i}  \right]
+  \end{split}
+\end{equation}
+
+If we assume\sidenote{Hypothesis 2: the observations are statistically independent} that the observations are independent, then the total probability for all observations is equal to the product of all the probabilities:
+\begin{equation}
+  \mathcal{L}=\prod_{i=1}^{i=n}\left[ \pi_{i}  \right]^{Y_{i}}\left[ 1 - \pi_{i}  \right]^{(1 - Y_{i})}
+\end{equation}
+
+For a specific set of $n$ observations $(x_{i},y_{i}), i=1 \ldots n$ this wil be:
+\begin{equation}
+  \begin{split}
+    \mathcal{L} &=\prod_{i=1}^{i=n}\left[ p_{i}  \right]^{y_{i}}\left[ 1 - p_{i}  \right]^{(1 - y_{i})} \\
+                &=\prod_{i=1}^{i=n}\left[ \frac{e^{b_0 + b_{1}x_{i}}}{1 + e^{b_0 + b_{1}x_{i}}}  \right]^{y_{i}}\left[ \frac{1}{1 + e^{b_0 + b_{1}x_{i}}}  \right]^{(1 - y_{i})} \\
+                &=\prod_{i=1}^{i=n}\frac{e^{y_{i}(b_0 + b_{1}x_{i})}}{1 + e^{b_0 + b_{1}x_{i}}} 
+  \end{split}
+\end{equation}
+Because all probabilities lie between $0$ and $1$, it follows that the product of these probabilities will also have a result between these two limits: $0 \leq \mathcal{L} \leq 1$.
+
+By taking the logarithm of $\mathcal{L}$ we obtain the \emph{log-likelihood function} $\ell$. Here we can work with sums instead of products, which is numerically advantageous:
+\begin{equation}
+  \begin{split}
+    \ell &= ln(\mathcal{L}) \\
+        &=\sum_{i=1}^{i=n}\left[ ln \left( e^{y_{i}(b_0 + b_{1}x_{i})} \right) - ln \left( 1 + e^{y_{i}(b_0 + b_{1}x_{i})} \right) \right] \\
+        &=\sum_{i=1}^{i=n}\left[  y_{i}(b_0 + b_{1}x_{i})   - ln \left( 1 + e^{y_{i}(b_0 + b_{1}x_{i})} \right) \right] \\
+  \end{split}
+\end{equation}
+
+The log-likelihood function will have values between $-\infty$ and $0$.
+
+In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical analysis.
 
 \chapter{Pearson: O-ring failure}
 
