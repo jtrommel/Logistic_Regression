@@ -120,29 +120,75 @@ grid.arrange(p1, p2, p3, ncol=3)
 @
 
 \begin{figure}
+\centering
 \includegraphics[width=200pt, height=200pt]{LR-distinction}
 \caption{Some situations}
 \label{fig:distinct}
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{figure}
 
-\subsection{What are the problems when we use simple linear regression?}
-When the response variable $Y$ in \emph{qualitative} rather than \emph{quantitative}, linear regression is not the best method to link $Y$ with the controllable factors $x_{i}$\sidenote{Y (in capital) is a probability variable, x (lower case) is known}. 
+It is important to remember that the results of one experiments represent only one sample of all possible experimental results. When we have multiple experiments we get different results each time (Figure~\ref{fig:intro}-left): the response variable $y_{i}$ is a probability variable $Y_{i}$. For small and large values of $x$ the results will practicaly always be ''zero" (small values) of ''one" (large values). However, in the intermediate zone, sometimes $Y_{i}=0$ and sometimes $Y_{i}=1$. By taking the average of all results we get the black dots in Figure~\ref{fig:intro}-right. When we put a smoothing line through these averages we get the S-shaped blue line.
 
-\newthought{When $Y$ can only have two values} we have a \emph{dichotomous} event: the image of $Y$ is $\{0,1\}$, with $P[Y=1]=\pi$ and $P[Y=0]=1-\pi$. We do not know all values of $Y$, but we have a sample (size=$n$) of $n$ pairs $(x_{i}, y_{i})$. However, the probability $\pi$ could be different for different values of $x_{i}$:
+<<label=intro,fig=TRUE,include=FALSE, echo=FALSE>>=
+N <- 10
+n <- 10
+b0 <- 0
+b1 <- 0.7
+sigma_U <- 2
+set.seed(2018)
+intro <- data.frame(expnr = rep((1:N), each=(2*n +1)), x = rep(seq(-n,n),N), y=0)
+intro$p <- 1/(1+exp(-(b0+b1*intro$x)))
+for (i in c(1:nrow(intro))) {intro$y[i] <- rbinom(1, 1, intro$p[i])}
+intro %>% group_by(x) %>% summarise(mean(y)) -> gem
+p1 <- ggplot() +
+  geom_jitter(data=intro, aes(x = x, y = y, color=factor(expnr)), width = 0.01, height = 0.01) +
+  xlim(-1.1*n, 1.1*n) +
+  labs(title = "Experimental resuls", 
+       subtitle = "10 repeat experiments",
+       x = "independent variable x", 
+       y = "observation of the responsvariable y") +
+  JT.theme
+p2 <- ggplot() +
+  geom_jitter(data=intro, aes(x = x, y = y, color=factor(expnr)), width = 0.01, height = 0.01) +
+  geom_point(data=gem, aes(x = x, y = `mean(y)`)) +
+  geom_smooth(data=gem, aes(x = x, y = `mean(y)`), method=loess , se=FALSE, span=0.1) +
+  xlim(-1.1*n, 1.1*n) +
+  labs(title = "Experimental resuls", 
+       subtitle = "10 repeat experiments",
+       x = "independent variable x", 
+       y = "observation of the responsvariable y") +
+  JT.theme +
+  theme(legend.position="none")
+grid.arrange(p1, p2, ncol=2)
+@
 
-\begin{equation}
-P[Y_{i}=1]=\pi_{i} \quad and \quad P[Y_{i}=0]=1-\pi_{i}
-\end{equation}
+\begin{figure}
+\centering
+\includegraphics[width=200pt, height=200pt]{LR-intro}
+\caption{Many experiments}
+\label{fig:intro}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{figure}
 
-The expected value of $Y_{i}$ is than
+\section{Why can't we use a univariate linear regression?}
+When the response variable $Y$ is \emph{qualitative} rather than \emph{quantitative}, linear regression is not the best method to link $Y$ with the controllable factors $x_{i}$\sidenote{Y (in capital) is a probability variable, x (lower case) is known}. 
 
-\begin{equation}
-E(Y_{i})=1\pi_{i} + 0(1-\pi_{i})=\pi_{i}
-\label{eq:meanpi}
-\end{equation}
+\newthought{When $Y$ can only have two values} we have a \emph{dichotomous} event: the image of $Y$ is $\{0,1\}$. 
 
-When we use a \emph{simple linear regression} we take it that the relation between $Y$ and $x$ can be written as:
+% with $P[Y=1]=\pi$ and $P[Y=0]=1-\pi$. We do not know all values of $Y$, but we have a sample (size=$n$) of $n$ pairs $(x_{i}, y_{i})$. However, the probability $\pi$ could be different for different values of $x_{i}$:
+% 
+% \begin{equation}
+% P[Y_{i}=1]=\pi_{i} \quad and \quad P[Y_{i}=0]=1-\pi_{i}
+% \end{equation}
+% 
+% The expected value of $Y_{i}$ is than
+% 
+% \begin{equation}
+% E(Y_{i})=1\pi_{i} + 0(1-\pi_{i})=\pi_{i}
+% \label{eq:meanpi}
+% \end{equation}
+
+When we use a \emph{univariate linear regression} we take it that the relation between $Y$ and $x$ can be written as:
 
 \begin{equation}
 Y=\beta_{0} + \beta_{1}x
@@ -153,7 +199,7 @@ The pairs $(x_{i}, Y_{i})$ will not neccesarily lie on the theoretical regressio
 \begin{equation}
 Y_{i}=\beta_{0} + \beta_{1}x_{i} + \epsilon_{i}
 \end{equation}
-
+\newpage
 \newthought{Problem 1: linear models give values outside the [0,1] range}
 
 When we calculate the expected value of $Y_{i}$ we get:
@@ -163,18 +209,18 @@ E(Y_{i})=E\left( \beta_{0} + \beta_{1}x_{i} + \epsilon_{i}  \right) = \beta_{0} 
 \label{eq:meanlin}
 \end{equation}
 
-From \ref{eq:meanpi} and \ref{eq:meanlin} it follows that
+% From \ref{eq:meanpi} and \ref{eq:meanlin} it follows that
+% 
+% \begin{equation}
+% \pi_{i}=\beta_{0} + \beta_{1}x_{i}
+% \label{eq:linkpimean}
+% \end{equation}
 
-\begin{equation}
-\pi_{i}=\beta_{0} + \beta_{1}x_{i}
-\label{eq:linkpimean}
-\end{equation}
-
-This means that all the values of $\beta_{0} + \beta_{1}x_{i}$ should lie between 0 and 1, because $\pi_{i}$ is a probability. This is not always the case when $\beta_{0}$ and $\beta_{1}$ are determined using the least squares method.
+But we know that all values of $E(Y_{i})=\beta_{0} + \beta_{1}x_{i}$ should be ''0" or ''1" or in between those numbers. This is not always the case when $\beta_{0}$ and $\beta_{1}$ are determined using the least squares method.
 
 \newthought{Problem 2: the error term $\epsilon_{i}$ is not normally distributed}
 
-From \ref{eq:linkpimean} it follows that the error can only have two values:
+The error can only have two values:
 
 \begin{equation}
 \begin{split}
@@ -189,46 +235,45 @@ With only two possible values, $\epsilon_{i}$ is dichotomous and \emph{not} norm
 
 The variance of the error is equal to the variance of the response variable, because
 \begin{equation}
-var(\epsilon_{i})=var(Y_{i}-\pi_{i})=var(Y_{i}) \quad because \quad \pi_{i}=cnst
+var(\epsilon_{i})=var(Y_{i} - \beta_{0} - \beta_{1}x_{i})=var(Y_{i}) \quad because \quad \beta_{0} + \beta_{1}x_{i}=cnst
 \end{equation}
 
 The variance of the response variable is:
 \begin{equation}
 \begin{split}
 var(Y_{i}) & \overset{\Delta}{=} E\left( (Y_{i} - E\left( Y_{i} \right))^{2}  \right) \\
-& = (1-\pi_{i})^{2}\pi_{i}+(0-\pi_{i})^{2}(1-\pi_{i}) \\
-& = (1-\pi_{i})[(1-\pi_{i})\pi_{i}+\pi_{i}^{2}] \\
-& = (1-\pi_{i})\pi_{i} \\
-& = E(1-Y_{i})E(Y_{i})
+& = E(Y_{i}^{2}) - \left( E(Y_{i}) \right)^{2}
 \end{split}
 \end{equation}
 
-The variance of the response variable $Y_{i}$ (and thus of the error $\epsilon_{i}$) depends on the mean of $Y_{i}$, and consequently is not a constant.
+The variance of the response variable $Y_{i}$ (and thus of the error $\epsilon_{i}$) depends on the mean of $Y_{i}$ which changes in function of $x_{i}$. Consequently it is not a constant. 
 
 \newthought{Conclusion}
 The three problems cited above make it clear that in general, the basic conditions for a linear regression are \emph{not} met when the response variable is dichotomous.
 
-\subsection{Introducing the ''sigmoid" or ''logistic" function}
+\newpage
+\section{The ''sigmoid" or ''logistic" function}
+\subsection{Definition}
 Just as in the case of linear regression we can \emph{see} that there is some sort of connection between $y$ an $x$, which is very clear in the scatterplot on the left of Figure~\ref{fig:distinct}, almost non existent on the right of Figure~\ref{fig:distinct} and a little tentative in the middle. 
 
-We could interpret these data by saying that $y_{i}$ is the result of a Bernouilli experiment: this experiment has two outcomes (''1" and ''0") with the following probabilities:
+We could interpret these data by saying that $E(Y_{i})$ is the result of a Bernouilli experiment\sidenote{Hypothesis 1: $Y_{i}$ is the result of a Bernouilli experiment}. This experiment has two outcomes (''1" and ''0") with the following probabilities:
 \begin{equation}
   \begin{split}
-  P[y_{i}=1] & =p(x_{i}) \\
-  P[y_{i}=0] &= 1-p(x_{i})
+  P[E(Y_{i})=1] & =\pi(x_{i}) \\
+  P[E(y_{i})=0] &= 1-\pi(x_{i})
   \end{split}
 \end{equation}
 
-The probability $P[y_{i}=1]=p(x_{i})$ \emph{changes} with $x_{i}$: for small values of $x_{i}$ it will be ''0", for large values of $x_{i}$ it will be ''1", and there is a region $[a \leq x_{i} \leq b]$ where the probability changes from ''0" to ''1". We could define $p(x_{i})$ as a linear change in this region:
+The probability $P[E(Y_{i})=1]=\pi(x_{i})$ \emph{changes} with $x_{i}$: for small values of $x_{i}$ it will be ''0", for large values of $x_{i}$ it will be ''1", and there is a region $[a \leq x_{i} \leq b]$ where the probability changes from ''0" to ''1". We could define $\pi(x)$ by a linear change in this region:
 \begin{equation}
   \begin{split}
-  x<a & \quad p(x)=0 \\
-  a \leq x \leq b & \quad p(x)=\frac{(x-a)}{(b-a)} \\
-  x>b & \quad p(x)=1
+  x<a & \quad \pi(x)=0 \\
+  a \leq x \leq b & \quad \pi(x)=\frac{(x-a)}{(b-a)} \\
+  x>b & \quad \pi(x)=1
   \end{split}
 \end{equation}
 
-But this is a crude approximation. An \emph{S-shape} or \emph{sigmoid} seems more appropriate. This function is given by:
+But this is a crude approximation. An \emph{S-shape} or \emph{sigmoid} seems more appropriate (see Figure~\ref{fig:intro}). This function is given by:
 \begin{equation}
   \sigma(t)=\frac{e^{t}}{1+e^{t}}=\frac{1}{1+e^{-t}}
 \end{equation}
@@ -238,16 +283,16 @@ This sigmoid function will be zero for $t \rightarrow -\infty$, will be one for 
   t = \beta_{0} + \beta_{1}x
 \end{equation}
 
-The probability $P[y_{i}=1]=p(x_{i})$ is then:
+The probability $P[E(y_{i})=1]=\pi(x_{i})$ is then given by the \emph{logistic} function:
 \begin{equation}
-  p(x_{i}) = \frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}}
+  \pi(x_{i}) = \frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}}
 \end{equation}
 
 From the definition of the logistic function it follows that
 \begin{equation}
   \begin{split}
-  odds &= \frac{p(x_{i})}{1-p(x_{i})} = e^{\beta_0 + \beta_{1}x_{i}} \\
-  logit(p(x_{i})) &= ln(odds) = ln \left( \frac{p(x_{i})}{1-p(x_{i})}  \right)=\beta_{0} + \beta_{1}x_{i}
+  odds &= \frac{\pi(x_{i})}{1-\pi(x_{i})} = e^{\beta_0 + \beta_{1}x_{i}} \\
+  logit(\pi(x_{i})) &= ln(odds) = ln \left( \frac{\pi(x_{i})}{1-\pi(x_{i})}  \right)=\beta_{0} + \beta_{1}x_{i}
   \end{split}
 \end{equation}
 
@@ -262,7 +307,7 @@ We can see that
 \end{split}
 \end{equation}
 
-The parameter $\beta_{0}$ is a \emph{place} factor (Figure~\ref{fig:place_and_form}-left): for positive values of $\beta_{0}$ it shifts the graph to the left, for negative values to the right. Parameter $\beta_{1}$ is a \emph{form} factor (Figure~\ref{fig:place_and_form}-right): for high values of $\beta_{1}$ it squeezes the graph to the center, for low values it streches the graph. Negative values of $\beta_{1}$ makes the sigmoid function go from high (1) for negative values of $x$ to low (0) for positive values of $x$.
+The parameter $\beta_{0}$ is a \emph{place} factor (Figure~\ref{fig:place_and_form}-left): for positive values of $\beta_{0}$ it shifts the graph to the left, for negative values to the right. Parameter $\beta_{1}$ is a \emph{form} factor (Figure~\ref{fig:place_and_form}-right): for high values of $\beta_{1}$ it squeezes the graph to the center, for low values it streches the graph. Positive values of $\beta_{1}$ make the sigmoid function go from low (0) to high (1), negative values of $\beta_{1}$ make the sigmoid function go from high (1) to low (0).
 
 <<label=place_and_form,fig=TRUE,include=FALSE, echo=FALSE>>=
 df_pandf <- data.frame(x=seq(-10,10,0.5),y1=0, y2=0, y3=0, y4=0, y5=0, y6=0, y7=0, y8=0)
@@ -303,7 +348,8 @@ grid.arrange(p1, p2, p3, ncol=3)
 @
 
 \begin{figure}
-\includegraphics[width=1\textwidth, height=200pt]{LR-place_and_form}
+\centering
+\includegraphics[width=1\textwidth, height=250pt]{LR-place_and_form}
 \caption{Place and form}
 \label{fig:place_and_form}
 \setfloatalignment{b}% forces caption to be bottom-aligned
@@ -312,7 +358,9 @@ grid.arrange(p1, p2, p3, ncol=3)
 
 \subsection{Finding the coefficients $\beta_{0}$ and $\beta_{1}$}
 
-In linear regression we determined the coefficients $\beta_{0}$ and $\beta_{1}$ using the \emph{Least Squares} criterium.
+In linear regression we determined the coefficients $\beta_{0}$ and $\beta_{1}$ using the \emph{Least Squares} criterium. However, because we start from one set $(x_{i}, y_{i})$ of experimental results, we cannot find the ''true" values of $\beta_{0}$ and $\beta_{1}$: we will find $b_{0}$ and $b_{1}$, one of many possible solutions. The same is true in logistical regression: based on the data of one experiment we will not find $\beta_{0}$ and $\beta_{1}$ but $b_{0}$ and $b_{1}$.
+
+In linear regression the criterium for finding $b_{0}$ and $b_{1}$ was to find a \emph{minimum} of the error $\sum_{i=1}^{i=n}(y_{i}-\hat{y}_{i})^{2}$. An analytical solution of this problem is available. In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical analysis.
 
 \chapter{Pearson: O-ring failure}
 
