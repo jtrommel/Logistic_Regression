@@ -270,22 +270,63 @@ The three problems cited above make it clear that in general, the basic conditio
 \section{''Sigmoid" functions}
 
 \subsection{The Probit Mean Response function}
-The independent variable $x$ is continuous. To translate the value of $x$ into a binary decision $y$ we need to have some cut off point: values of $x$ above the cut off point will get $y=1$, while values of $x$ below the cut off will result in $y=0$\sidenote{The coding could of cours be inverse: values above cut off get $y=0$, values below cut off get $y=1$}. When we call this cut off value $x_{co}$ it follows that:
+The response variable $y$ can only take the values ''0" and ''1". Or we should say the \emph{codes} ''0" and ''1". This coding is often based on another, continuous, variable $y'$. For example: the diameter of a steel rod can be influenced by the temperature ($x$) at which it is extruded. If the temperature is too low, the diameter will be too large. It is qualified as ''OK=1" when its diameter ($y'$) is below 25mm. \sidenote{The coding could of course be inverse with values above cut off get $y=0$, values below cut off get $y=1$}. When we call this cut off value for $y'$; $y'_{co}$ it follows that, and we assume that there is a linear relation between $y'$ and $x$ we get
 \begin{equation}
   \begin{split}
-    P[Y_{i}]=1=\pi_{i}&=P[x>x_{co}] \\
-    &=P[\beta_0 + \beta_{1}x_{i}+\epsilon{i} > \beta_0 + \beta_1x_{co}] \\
-    &=P[\epsilon{i}>\beta_{1}(x_{co}-x_{i})] \\
-    &=P[\frac{\epsilon -0}{\sigma}] > \frac{\beta_{1}}{\sigma}(x_{co}-x_{i}) \quad with \quad \epsilon \sim \mathcal{N} (0,\sigma) \\
-    &=P \left[ Z> \left(  \frac{\beta_{1}x_{co}}{\sigma} - \frac{\beta_{1}x_{i}}{\sigma} \right) \right] \\
-    &=P[Z>(\beta_{0}^{*}+\beta_{1}^{*}x_{i})]
+    P[Y_{i}]=1=\pi_{i}&=P[Y'< y'_{co}] \\
+    &=P[\beta'_0 + \beta'_{1}X_{i}+\epsilon'_{i} < y'_{co}] \\
+    &=P[\epsilon'_{i} < y'_{co} - \beta'_{0} -\beta'_{1}X_{i}] \\
+    &=P[\frac{\epsilon'_{i} -0}{\sigma'} < \frac{y'_{co} - \beta'_{0}}{\sigma'} - \frac{\beta'_{1}}{\sigma'}X_{i} \quad with \quad \epsilon'_{i} \sim \mathcal{N} (0,\sigma') \\
+    &=P[Z < (\beta_{0}^{*}+\beta_{1}^{*}X_{i})]
   \end{split}  
 \end{equation}
 
-With $\phi(z)$ the standard normal distribution it follows that:
+With $\phi(z)$ the standard normal distribution this gives the \emph{probit mean response function}:
 \begin{equation}
-E(Y_{i})=\pi_{i}=1-\phi\left[ \beta_{0}^{*}+\beta_{1}^{*}x_{i})  \right]
+E(Y_{i})=\pi_{i}=\phi\left[ \beta_{0}^{*}+\beta_{1}^{*}X_{i})  \right]
 \end{equation}
+
+The inverse of this function is the \emph{probit transformation}:
+\begin{equation}
+\phi^{-1}(\pi_{i})=\beta_{0}^{*}+\beta_{1}^{*}X_{i})
+\end{equation}
+
+<<label=probit,fig=TRUE,include=FALSE, echo=FALSE>>=
+n <- 10
+step <- 0.1
+beta0 <- 0
+beta1 <- c(0.5,1,5) 
+probit <- data.frame(x=rep(seq(-n,n,by=step),3), beta0=0, beta1=rep(beta1, each=2*n/step+1))
+probit$y <- pnorm(probit$beta0+probit$beta1*probit$x, 0, 1)
+p1 <- ggplot(data=probit) +
+  geom_line(aes(x = x, y = y, color=factor(beta1))) +
+  xlim(-1.1*n, 1.1*n) +
+  labs(title = "Probit function", 
+       x = "independent variable x", 
+       y = "probability") +
+  JT.theme
+
+beta0 <- c(-5,0,5)
+beta1 <- 1
+probit <- data.frame(x=rep(seq(-n,n,by=step),3), beta0=rep(beta0, each=2*n/step+1), beta1=beta1)
+probit$y <- pnorm(probit$beta0+probit$beta1*probit$x, 0, 1)
+p2 <- ggplot(data=probit) +
+  geom_line(aes(x = x, y = y, color=factor(beta0))) +
+  xlim(-1.1*n, 1.1*n) +
+  labs(title = "Probit function", 
+       x = "independent variable x", 
+       y = "probability") +
+  JT.theme
+grid.arrange(p1, p2, ncol=2)
+@
+
+\begin{figure}
+\centering
+\includegraphics[width=200pt, height=200pt]{LR-probit}
+\caption{Probit function for different values of $\beta_{0}^{*}$ and $\beta_{1}^{*}$}
+\label{fig:probit}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{figure}
 
 \subsection{Definition}
 Just as in the case of linear regression we can \emph{see} that there is some sort of connection between $y$ an $x$, which is very clear in the scatterplot on the left of Figure~\ref{fig:distinct}, almost non existent on the right of Figure~\ref{fig:distinct} and a little tentative in the middle. 
