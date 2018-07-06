@@ -127,7 +127,7 @@ grid.arrange(p1, p2, p3, ncol=3)
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{figure}
 
-It is important to remember that the results of one experiments represent only one sample of all possible experimental results. When we have multiple experiments we get different results each time (Figure~\ref{fig:intro}-left): the response variable $y_{i}$ is a probability variable $Y_{i}$. For small and large values of $x$ the results will practicaly always be ''zero" (small values) of ''one" (large values). However, in the intermediate zone, sometimes $Y_{i}=0$ and sometimes $Y_{i}=1$. By taking the average of all results we get the black dots in Figure~\ref{fig:intro}-right. When we put a smoothing line through these averages we get the S-shaped blue line.
+It is important to remember that the results of one experiment represent only one sample of all possible experimental results. When we have multiple experiments we get different results each time (Figure~\ref{fig:intro}-left): the response variable $y_{i}$ is a probability variable $Y_{i}$. For small and large values of $x$ the results will practicaly always be ''zero" (small values) or ''one" (large values). However, in the intermediate zone, sometimes $Y_{i}=0$ and sometimes $Y_{i}=1$. By taking the average of all results we get the black dots in Figure~\ref{fig:intro}-right. When we put a smoothing line through these averages we get the S-shaped blue line.
 
 <<label=intro,fig=TRUE,include=FALSE, echo=FALSE>>=
 N <- 10
@@ -179,7 +179,7 @@ When we use a \emph{univariate linear regression} we take it that the relation b
 Y_{i}=\beta_{0} + \beta_{1}x_{i} + \epsilon_{i}
 \end{equation}
 
-The error term $\epsilon_{i}$ arises because other, unknown of uncontrollable, variables cause the pairs $(x_{i}, Y_{i})$ not to lie on the theoretical regression line. Because we assume that these errors are $N(0,\sigma)$ distributed it follows that
+The error term $\epsilon_{i}$ arises because other, unknown or uncontrollable, variables cause the pairs $(x_{i}, Y_{i})$ not to lie on the theoretical regression line. Because we assume that these errors are $N(0,\sigma)$ distributed it follows that
 \begin{equation} 
 \label{eq:linear}
 E(Y_{i})=\beta_{0} + \beta_{1}x_{i}
@@ -195,7 +195,7 @@ Combining \ref{eq:linear} and \ref{eq:pi} we get:
 E(Y_{i})=\beta_{0}+\beta_{1}x_{i}=\pi_{i}
 \end{equation}
 
-This means that the mean response $E(Y_{i})=\beta_{0}+\beta_{1}x_{i}$ (the \emph{response function}) is no other than the probability that for this value of $x_{i}$ the response variable $Y_{i}$ will be equal to 1. Because probabilities are limited to the interval $[0,1]$, the response function has to be capped at the low and the high end (Figure~\ref{fig:linresp}).
+This means that the mean response $E(Y_{i})=\beta_{0}+\beta_{1}x_{i}$ (the \emph{response function}) is no other than the probability that for this value of $x_{i}$ the response variable $Y_{i}$ will be equal to 1. Because probabili-ties are limited to the interval $[0,1]$, the response function has to be capped at the low and at the high end (Figure~\ref{fig:linresp}).
 
 <<label=linresp,fig=TRUE,include=FALSE, echo=FALSE>>=
 n <- 10
@@ -325,12 +325,12 @@ When we call this cut off value for $y'$, $y'_{co}$ and we assume that there is 
 
 With $\phi(z)$ the cumulative density function of the standard normal distribution this gives the \emph{probit mean response function}:
 \begin{equation}
-E(Y_{i})=\pi_{i}=\phi\left[ \beta_{0}^{*}+\beta_{1}^{*}X_{i})  \right]
+E(Y_{i})=\pi_{i}=\phi\left[ \beta_{0}^{*}+\beta_{1}^{*}X_{i}  \right]
 \end{equation}
 
 The inverse of this function is the \emph{probit transformation}:
 \begin{equation}
-\phi^{-1}(\pi_{i})=\beta_{0}^{*}+\beta_{1}^{*}X_{i})
+\phi^{-1}(\pi_{i})=\beta_{0}^{*}+\beta_{1}^{*}X_{i}
 \end{equation}
 
 <<label=probit,fig=TRUE,include=FALSE, echo=FALSE>>=
@@ -375,13 +375,13 @@ grid.arrange(p2, p1, ncol=2)
 Figure~\ref{fig:probit} illustrates the following:
 \begin{enumerate}
   \item The \emph{probit mean response function} uses the cumulative density function of the standard normal distribution. This guarantees that the results will always be in the range $[0,1]$
-  \item Although we started this example looking only at the cut off point $y'_{co}=25mm$ below which $Y_{i}=1$. In Figure~\ref{fig:probit} we can see that automatically there is also a cut off point below which $Y_{i}=0$.
+  \item Although we started this example looking only at the cut off point $y'_{co}=25mm$ below which $Y_{i}=1$ we can see in Figure~\ref{fig:probit} that automatically there is also a cut off point below which $Y_{i}=0$.
   \item Parameter $\beta_{0}^{*}$ is a \emph{place} parameter. When $\beta_{0}^{*}=0$ the probability will be $0.5$ for $x=0$. For negative values of $\beta_{0}^{*}$ the curve shifts to the right, for positive values of $\beta_{0}^{*}$ the curve shifts to the left
   \item Parameter $\beta_{1}^{*}$ is a \emph{form} parameter. The higher its value, the steeper the curve switches from ''0" to ''1".
-  \item If we had used the opposite coding (''0" when $y'<y'_{co}$) we could call this probability variable $Y^{opp}_{i}$ and $Y^{opp}_{i}=1-Y$. But because $\phi(z)=1-\phi(-z)$ it follows that $P[Y^{opp}_{i}]= P[Y=0] = 1-\phi(\beta_{0}^{*}+\beta_{1}^{*}x)\phi(-\beta_{0}^{*}-\beta_{1}^{*}x)$. It has the same form, only the sign of the $\beta$'s has changed.
+  \item If we had used the opposite coding (''0" when $y'<y'_{co}$) we could call this probability variable $Y^{opp}_{i}$ and $Y^{opp}_{i}=1-Y$. But because $\phi(z)=1-\phi(-z)$ it follows that $P[Y^{opp}_{i}]= P[1-Y] = 1-\phi(\beta_{0}^{*}+\beta_{1}^{*}x)=\phi(-\beta_{0}^{*}-\beta_{1}^{*}x)$. It has the same form, only the sign of the $\beta$'s has changed.
 \end{enumerate}
 
-\subsection{Definition}
+\subsection{The logistic function}
 Just as in the case of linear regression we can \emph{see} that there is some sort of connection between $y$ an $x$, which is very clear in the scatterplot on the left of Figure~\ref{fig:distinct}, almost non existent on the right of Figure~\ref{fig:distinct} and a little tentative in the middle. 
 
 We could interpret these data by saying that $E(Y_{i})$ is the result of a Bernouilli experiment\sidenote{Hypothesis 1: $Y_{i}$ is the result of a Bernouilli experiment}. This experiment has two outcomes (''1" and ''0") with the following probabilities:
@@ -401,7 +401,7 @@ The probability $P[E(Y_{i})=1]=\pi(x_{i})$ \emph{changes} with $x_{i}$: for smal
   \end{split}
 \end{equation}
 
-But this is a crude approximation. An \emph{S-shape} or \emph{sigmoid} seems more appropriate (see Figure~\ref{fig:intro}). This function is given by:
+But this is a crude approximation. An \emph{S-shape} or \emph{sigmoid} seems more appropriate (see Figure~\ref{fig:intro}). A possible function is given by:
 \begin{equation}
   \sigma(t)=\frac{e^{t}}{1+e^{t}}=\frac{1}{1+e^{-t}}
 \end{equation}
@@ -416,7 +416,7 @@ The probability $P[E(y_{i})=1]=\pi(x_{i})$ is then given by the \emph{logistic} 
   \pi(x_{i}) = \frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}}
 \end{equation}
 
-From the definition of the logistic function it follows that
+Based on this definition of the logistic function we can define two other useful entities: the \emph{odds} and the \emph{logit function}:
 \begin{equation}
   \begin{split}
   odds &= \frac{\pi(x_{i})}{1-\pi(x_{i})} = e^{\beta_0 + \beta_{1}x_{i}} \\
@@ -488,14 +488,14 @@ grid.arrange(p1, p2, p3, ncol=3)
 
 In linear regression, because we start from one set $(x_{i}, y_{i})$ of experimental results, we cannot find the ''true" values of $\beta_{0}$ and $\beta_{1}$: we will find $b_{0}$ and $b_{1}$, one of many possible solutions. The same is true in logistical regression: based on the data of one experiment we will not find $\beta_{0}$ and $\beta_{1}$ but $b_{0}$ and $b_{1}$.
 
-In linear regression the criterium for finding $b_{0}$ and $b_{1}$ was to find, using the Ordinary Least Squares method, a \emph{minimum} of the error which is the sum of the squares of the residuals:
+In linear regression we find $b_{0}$ and $b_{1}$ using the Ordinary Least Squares method: we \emph{minimise} the error which is the sum of the squares of the residuals:
 \begin{equation}
   \sum_{i=1}^{i=n}(y_{i}-\hat{y}_{i})^{2}=\sum_{i=1}^{i=n}(r_{i})^{2} \quad with \quad r_{i}= residual_{i}
 \end{equation}
 
 An analytical solution of this problem is available. 
 
-When we accept  hypothesis 1 ($Y_{i}$ is the result of a Bernouilli experiment with probability $\pi_{i}$), then the probability distribution for $Y_{i}$ can be written as:
+When we accept the hypothesis that ($Y_{i}$ is the result of a Bernouilli experiment with probability $\pi_{i}$ \sidenote{hypothesis 1: $Y_{i}$ is the result of a Bernouilli experiment with probability $\pi_{i}$}, then the probability distribution for $Y_{i}$ can be written as:
 \begin{equation}
   P[Y_{i}|x_{i}]=\left[ \pi_{i}  \right]^{Y_{i}}\left[ 1 - \pi_{i}  \right]^{(1 - Y_{i})}
 \end{equation}
