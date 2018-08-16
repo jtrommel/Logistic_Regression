@@ -62,6 +62,7 @@
 library(tidyverse)
 library(gridExtra)
 library(broom)
+library(mcsm)
 library(scatterplot3d)
 @
 
@@ -91,7 +92,7 @@ JT.theme <- theme(panel.border = element_rect(fill = NA, colour = "gray10"),
 \mainmatter
 \chapter{Logistic Regression: theoretical background}
 
-\section{Why end when do we need a logistic regression?}
+\section{Why and when do we need a logistic regression?}
 
 Let us start with the situation where the response variable $Y$ can only have two (discrete) levels ''Yes" and ''No", or ''Dead" and ''Alive". Usually we asign the value ''1" to one outcome and ''0" to the other. Strictly speaking these should not be viewed as actual numbers. The qualitative response (''Dead" vs ''Alive") are coded in an \emph{indicator variable} $y$, which can only have the values ''0" and ''1". We start with only one controllable factor $x$. Let us say that for small values of $x$ the response is ''0", for large values of $x$ the response is ''1". This general description can still give rise to very different situations. It all depends on the region in between: we can go from a situation with a very clear distinction, a fuzzy middle or a fuzzy all round (Figure~\ref{fig:distinct}).
 
@@ -537,15 +538,40 @@ The log-likelihood function will have values between $-\infty$ and $0$.
 
 In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical techniques such as the \emph{Newton-Raphson method}. Essentially it involves a iterative process in which a set of equtions based on the \emph{Hessian matrix} and the \emph{gradient vector} of the \emph{Log Likelihood function}\sidenote{See: "Finding the maximum of the (log) likelihood function with the Newton-Raphson method"}. In R this is done by the \textit{glm(family=binomial(link="logit"))} function (General Linear Model), where we specify that we assume the process to be ''binomial", and the link function to be ''logit".
 
-\chapter{Pearson: O-ring failure}
+\section{Quality of the regression model}
 
-\section{Logistic regression: an example}
+\subsection{Hypothesis test}
 
+The model has no value whatsoever when $\beta_{1}=0$. In that case the probability $\pi(x_{i})$ will be independent of $x_{i}$. When we rework the model with the restriction that $\beta_{1}=0$ the \emph{Likelihood function} and the \emph{Log Likelihood function} are given by:
+
+\begin{equation}
+\begin{split}
+    \mathcal{L} &=\prod_{i=1}^{i=n}\frac{e^{y_{i}b_0}}{1 + e^{b_0}} \\
+    \ell &= \sum_{i=1}^{i=n} \left[y_{i}b_{0} - ln(1+e^{b0} \right]
+\end{split}
+\end{equation}
+
+These functions in $b_{0}$ have a maximum when
+\begin{equation}
+\frac{d}{db_{0}}\ell = \sum_{i=1}^{i=n}y_{i}- \sum_{i=1}^{i=n}\frac{e^{b_{0}}}{1+e^{b_{0}}}=\sum_{i=1}^{i=n}y_{i} - n\frac{e^{b_{0}}}{1+e^{b_{0}}}=0
+\end{equation}
+
+from which follows that the maximum is reached for the value $b_{0}=b_{0}^{*}$
+\begin{equation}
+b_{0}^{*}=ln \frac{\bar{y}}{1-\bar{y}}
+\end{equation}
+
+Now we can calculate the value of the \emph{Likelihood function} for the case with $\beta_{1}=0$ (this value we call $\mathcal{L}_{0}$) and for the case with the values for $\beta_{0}$ and $\beta_{1}$ given by the logit regression model (this value we call $\mathcal{L}_{a}$).
+
+\chapter{An example}
+
+\section{O-ring failure}
+
+In the ''mcsm"-package data are given relating to the accident with the Challenger spacecraft, January 1986. O-rings were used to seal compartiments, but it was known that the failure of these rings depended on the temperature. 
 <<label=scatter,fig=TRUE,include=FALSE, echo=FALSE>>=
-O.ring <- data.frame(tempC=c(12, 13, 14, 17, 18, 19, 19, 19, 20, 20.5, 21, 21, 21, 21, 22, 23, 24, 24, 25, 25, 25.5, 26, 27, 27.2), failure=c(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0))
-O.ring$tempF <- O.ring$tempC*1.8 + 32
-ggplot(data=O.ring) + 
-  geom_point(aes(x=tempF, y=failure)) +
+data(challenger)
+ggplot(data=challenger) + 
+  geom_point(aes(x=temp, y=oring)) +
     labs(title="Scatterplot O-ring failure", xlab="temperature (F)", ylab="failure: 1=yes, 0=no") +
   JT.theme
 @
@@ -557,11 +583,19 @@ ggplot(data=O.ring) +
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-<<label=scatterplusmodel,fig=TRUE,include=FALSE, echo=TRUE>>=
-modF <- glm(failure~tempF,data=O.ring,family=binomial(link="logit"))
+The data are given by the following scatterplot (Figure~\ref{fig:scatter}). ''Failure" is coded as ''1".
+
+We find the values for $b_{0}$ and $b_{1}$ for a logistic regression with the \emph{logit} function as link function using the \textit{glm}-function in R. The \emph{logit} function is superimposed on the data in Figure~\ref{fig:scatterplusmodel}.
+
+<<>>=
+modF <- glm(oring~temp,data=challenger,family=binomial(link="logit"))
+broom::tidy(modF)
+@
+
+<<label=scatterplusmodel,fig=TRUE,include=FALSE, echo=FALSE>>=
 modelF <- data.frame(x=seq(52, 82, 1), y=0)
 modelF$y <- 1/(1+exp(-(modF$coefficients[1] + modF$coefficients[2]*modelF$x)))
-ggplot(data=O.ring, aes(x=tempF, y=failure)) + 
+ggplot(data=challenger, aes(x=temp, y=oring)) + 
   geom_point() + 
   geom_line(data = modelF, aes(x=x, y=y), colour="red") +
   JT.theme 
@@ -574,10 +608,6 @@ ggplot(data=O.ring, aes(x=tempF, y=failure)) +
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-<<>>=
-broom::tidy(modF)
-broom::glance(modF)
-@
 
 \newpage
 \textbf{Thanks} \\
