@@ -61,6 +61,7 @@
 <<echo=FALSE>>=
 library(tidyverse)
 library(gridExtra)
+library(broom)
 library(scatterplot3d)
 @
 
@@ -88,9 +89,9 @@ JT.theme <- theme(panel.border = element_rect(fill = NA, colour = "gray10"),
 \chapter*{Logistic Regression}
 
 \mainmatter
-\chapter{Why do we need a logistic regression?}
+\chapter{Logistic Regression: theoretical background}
 
-\section{Y is a discrete variable with two possible values}
+\section{Why end when do we need a logistic regression?}
 
 Let us start with the situation where the response variable $Y$ can only have two (discrete) levels ''Yes" and ''No", or ''Dead" and ''Alive". Usually we asign the value ''1" to one outcome and ''0" to the other. Strictly speaking these should not be viewed as actual numbers. The qualitative response (''Dead" vs ''Alive") are coded in an \emph{indicator variable} $y$, which can only have the values ''0" and ''1". We start with only one controllable factor $x$. Let us say that for small values of $x$ the response is ''0", for large values of $x$ the response is ''1". This general description can still give rise to very different situations. It all depends on the region in between: we can go from a situation with a very clear distinction, a fuzzy middle or a fuzzy all round (Figure~\ref{fig:distinct}).
 
@@ -170,7 +171,7 @@ grid.arrange(p1, p2, ncol=2)
 \end{figure}
 
 \section{Why can't we use a univariate linear regression?}
-When the response variable $Y$ is \emph{qualitative} rather than \emph{quantitative}, linear regression is not the best method to link $Y$ with the controllable factors $x_{i}$\sidenote{Y (in capital) is a probability variable, x (lower case) is known}. 
+When the response variable $Y$ is \emph{qualitative} rather than \emph{quanti\-tative}, linear regression is not the best method to link $Y$ with the controllable factors $x_{i}$\sidenote{Y (in capital) is a probability variable, x (lower case) is known}. 
 
 \newthought{When $Y$ can only have two values} we have a \emph{dichotomous} event: the image of $Y$ is $\{0,1\}$. 
 
@@ -315,7 +316,7 @@ grid.arrange(p1, p2, nrow=2)
 When we call this cut off value for $y'$, $y'_{co}$ and we assume that there is a linear relation between $y'$ and $x$ it follows that:
 \begin{equation}
   \begin{split}
-    P[Y_{i}]=1=\pi_{i}&=P[Y'_{i}< y'_{co}] \\
+    P[Y_{i}=1]=\pi_{i}&=P[Y'_{i}< y'_{co}] \\
     &=P[\beta'_0 + \beta'_{1}X_{i}+\epsilon'_{i} < y'_{co}] \\
     &=P[\epsilon'_{i} < y'_{co} - \beta'_{0} -\beta'_{1}X_{i}] \\
     &=P[\frac{\epsilon'_{i} -0}{\sigma'} < \frac{y'_{co} - \beta'_{0}}{\sigma'} - \frac{\beta'_{1}}{\sigma'}X_{i} \quad with \quad \epsilon'_{i} \sim \mathcal{N} (0,\sigma') \\
@@ -406,7 +407,7 @@ But this is a crude approximation. An \emph{S-shape} or \emph{sigmoid} seems mor
   \sigma(t)=\frac{e^{t}}{1+e^{t}}=\frac{1}{1+e^{-t}}
 \end{equation}
 
-This sigmoid function will be zero for $t \rightarrow -\infty$, will be one for $t \rightarrow +\infty$, and will be $0.5$ for $t=0$. We can make this sigmoid function dependent on the independent variable $x$ when $t=f(x)$. The simplest function is a linear one:
+This sigmoid function will be zero for $t \rightarrow -\infty$, will be one for $t \rightarrow +\infty$, and will be $0.5$ for $t=0$. We can make this sigmoid function dependent on the independent variable $x$ by defining a function $t=f(x)$. The simplest function is a linear one:
 \begin{equation}
   t = \beta_{0} + \beta_{1}x
 \end{equation}
@@ -429,9 +430,9 @@ Based on this definition of the logistic function we can define two other useful
 We can see that
 \begin{equation}
 \begin{split}
-\lim_{x\to -\infty} \frac{e^{\beta_{0}+\beta_{1}x}}{1+e^{\beta_{0}+\beta_{1}x}} &= 0 \\
-\lim_{x\to \infty} \frac{e^{\beta_{0}+\beta_{1}x}}{1+e^{\beta_{0}+\beta_{1}x}} &= 1 \\
-\frac{e^{\beta_{0}+\beta_{1}x}}{1+e^{\beta_{0}+\beta_{1}x}}(x=0) &= \frac{e^{\beta_{0}}}{1+e^{\beta_{0}}}
+\lim_{x\to -\infty} \frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}} &= 0 \\
+\lim_{x\to \infty} \frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}} &= 1 \\
+\frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}}(x=0) &= \frac{1}{1+e^{-\beta_{0}}}
 \end{split}
 \end{equation}
 
@@ -534,11 +535,11 @@ By taking the logarithm of $\mathcal{L}$ we obtain the \emph{log-likelihood func
 
 The log-likelihood function will have values between $-\infty$ and $0$.
 
-In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical analysis.
+In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical techniques such as the \emph{Newton-Raphson method}. Essentially it involves a iterative process in which a set of equtions based on the \emph{Hessian matrix} and the \emph{gradient vector} of the \emph{Log Likelihood function}\sidenote{See: "Finding the maximum of the (log) likelihood function with the Newton-Raphson method"}. In R this is done by the \textit{glm(family=binomial(link="logit"))} function (General Linear Model), where we specify that we assume the process to be ''binomial", and the link function to be ''logit".
 
 \chapter{Pearson: O-ring failure}
 
-\section{Logistic regression}
+\section{Logistic regression: an example}
 
 <<label=scatter,fig=TRUE,include=FALSE, echo=FALSE>>=
 O.ring <- data.frame(tempC=c(12, 13, 14, 17, 18, 19, 19, 19, 20, 20.5, 21, 21, 21, 21, 22, 23, 24, 24, 25, 25, 25.5, 26, 27, 27.2), failure=c(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0))
@@ -556,25 +557,27 @@ ggplot(data=O.ring) +
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-<<label=scatterplusmodel,fig=TRUE,include=FALSE, echo=FALSE>>=
+<<label=scatterplusmodel,fig=TRUE,include=FALSE, echo=TRUE>>=
 modF <- glm(failure~tempF,data=O.ring,family=binomial(link="logit"))
 modelF <- data.frame(x=seq(52, 82, 1), y=0)
 modelF$y <- 1/(1+exp(-(modF$coefficients[1] + modF$coefficients[2]*modelF$x)))
 ggplot(data=O.ring, aes(x=tempF, y=failure)) + 
   geom_point() + 
   geom_line(data = modelF, aes(x=x, y=y), colour="red") +
-  JT.theme            
+  JT.theme 
 @
 
-<<>>=
-summary(modF)
-@
 \begin{marginfigure}
 \includegraphics[width=1\textwidth]{LR-scatterplusmodel}
 \caption{Scatterplot and logistic regression model}
 \label{fig:scatterplusmodel}
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
+
+<<>>=
+broom::tidy(modF)
+broom::glance(modF)
+@
 
 \newpage
 \textbf{Thanks} \\
