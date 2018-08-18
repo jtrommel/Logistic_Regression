@@ -62,7 +62,6 @@
 library(tidyverse)
 library(gridExtra)
 library(broom)
-library(mcsm)
 library(scatterplot3d)
 @
 
@@ -523,7 +522,7 @@ For a specific set of $n$ observations $(x_{i},y_{i}), i=1 \ldots n$ this wil be
                 &=\prod_{i=1}^{i=n}\frac{e^{y_{i}(b_0 + b_{1}x_{i})}}{1 + e^{b_0 + b_{1}x_{i}}} 
   \end{split}
 \end{equation}
-Because all probabilities lie between $0$ and $1$, it follows that the product of these probabilities will also have a result between these two limits: $0 \leq \mathcal{L} \leq 1$.
+Because all probabilities lie between $0$ and $1$, it follows that the product of these probabilities will also have a result between these two limits: the \emph{Likelihood} function will have values between 0 and 1.
 
 By taking the logarithm of $\mathcal{L}$ we obtain the \emph{log-likelihood function} $\ell$. Here we can work with sums instead of products, which is numerically advantageous:
 \begin{equation}
@@ -532,43 +531,19 @@ By taking the logarithm of $\mathcal{L}$ we obtain the \emph{log-likelihood func
         &=\sum_{i=1}^{i=n}\left[ ln \left( e^{y_{i}(b_0 + b_{1}x_{i})} \right) - ln \left( 1 + e^{y_{i}(b_0 + b_{1}x_{i})} \right) \right] \\
         &=\sum_{i=1}^{i=n}\left[  y_{i}(b_0 + b_{1}x_{i})   - ln \left( 1 + e^{y_{i}(b_0 + b_{1}x_{i})} \right) \right] \\
   \end{split}
+  \label{eq:loglikelihoodlogit}
 \end{equation}
 
-The log-likelihood function will have values between $-\infty$ and $0$.
+The \emph{Log-Likelihood} function will have values between $-\infty$ and $0$.
 
 In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical techniques such as the \emph{Newton-Raphson method}. Essentially it involves a iterative process in which a set of equtions based on the \emph{Hessian matrix} and the \emph{gradient vector} of the \emph{Log Likelihood function}\sidenote{See: "Finding the maximum of the (log) likelihood function with the Newton-Raphson method"}. In R this is done by the \textit{glm(family=binomial(link="logit"))} function (General Linear Model), where we specify that we assume the process to be ''binomial", and the link function to be ''logit".
 
-\section{Quality of the regression model}
+\newthought{Example: O-rings of the Challenger spacecraft}
 
-\subsection{Hypothesis test}
+In the ''mcsm"-package data are given relating to the accident with the Challenger spacecraft, January 1986. O-rings were used to seal compartiments, but it was known that the failure of these rings depended on the temperature. The data are given by the following scatterplot (Figure~\ref{fig:scatter}). ''Failure" is coded as ''1".
 
-The model has no value whatsoever when $\beta_{1}=0$. In that case the probability $\pi(x_{i})$ will be independent of $x_{i}$. When we rework the model with the restriction that $\beta_{1}=0$ the \emph{Likelihood function} and the \emph{Log Likelihood function} are given by:
-
-\begin{equation}
-\begin{split}
-    \mathcal{L} &=\prod_{i=1}^{i=n}\frac{e^{y_{i}b_0}}{1 + e^{b_0}} \\
-    \ell &= \sum_{i=1}^{i=n} \left[y_{i}b_{0} - ln(1+e^{b0} \right]
-\end{split}
-\end{equation}
-
-These functions in $b_{0}$ have a maximum when
-\begin{equation}
-\frac{d}{db_{0}}\ell = \sum_{i=1}^{i=n}y_{i}- \sum_{i=1}^{i=n}\frac{e^{b_{0}}}{1+e^{b_{0}}}=\sum_{i=1}^{i=n}y_{i} - n\frac{e^{b_{0}}}{1+e^{b_{0}}}=0
-\end{equation}
-
-from which follows that the maximum is reached for the value $b_{0}=b_{0}^{*}$
-\begin{equation}
-b_{0}^{*}=ln \frac{\bar{y}}{1-\bar{y}}
-\end{equation}
-
-Now we can calculate the value of the \emph{Likelihood function} for the case with $\beta_{1}=0$ (this value we call $\mathcal{L}_{0}$) and for the case with the values for $\beta_{0}$ and $\beta_{1}$ given by the logit regression model (this value we call $\mathcal{L}_{a}$).
-
-\chapter{An example}
-
-\section{O-ring failure}
-
-In the ''mcsm"-package data are given relating to the accident with the Challenger spacecraft, January 1986. O-rings were used to seal compartiments, but it was known that the failure of these rings depended on the temperature. 
 <<label=scatter,fig=TRUE,include=FALSE, echo=FALSE>>=
+library(mcsm)
 data(challenger)
 ggplot(data=challenger) + 
   geom_point(aes(x=temp, y=oring)) +
@@ -583,13 +558,13 @@ ggplot(data=challenger) +
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-The data are given by the following scatterplot (Figure~\ref{fig:scatter}). ''Failure" is coded as ''1".
-
-We find the values for $b_{0}$ and $b_{1}$ for a logistic regression with the \emph{logit} function as link function using the \textit{glm}-function in R. The \emph{logit} function is superimposed on the data in Figure~\ref{fig:scatterplusmodel}.
+We find the values for $b_{0}$ and $b_{1}$ that maximize the \emph{(Log) Likelihood} function using the \textit{glm}-function in R, ''family=binomial" and ''link function = logit". The result is superimposed on the data in Figure~\ref{fig:scatterplusmodel}.
 
 <<>>=
-modF <- glm(oring~temp,data=challenger,family=binomial(link="logit"))
-broom::tidy(modF)
+modF <- glm(oring~temp,data=challenger,
+            family=binomial(link="logit"))
+tidymodF <- broom::tidy(modF)
+tidymodF
 @
 
 <<label=scatterplusmodel,fig=TRUE,include=FALSE, echo=FALSE>>=
@@ -608,7 +583,105 @@ ggplot(data=challenger, aes(x=temp, y=oring)) +
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
+\section{Quality of the regression model}
 
+\subsection{Hypothesis test}
+
+When we use the ''logit" link function we assume that the probability $P[Y_{i}=1]=\pi(x_{i})$ depends on $x_{i}$:
+
+\begin{equation}
+P[Y_{i}=1]=\pi(x_{i})=\frac{1}{1+e^{-(\beta_{0}+\beta_{1}x_{i})}}
+\end{equation}
+
+This is the alternative hypothesis $H_{a}$. The null-hypothesis $H_{0}$ assumes that the probability is independent of $x_{i}$ which is the same as saying that $\beta_{1}=0$.
+
+The \emph{Log Likelihood} function under the null-hypothesis is:
+\begin{equation}
+\ell(H_{0}) = \sum_{i=1}^{i=n} \left[y_{i}b_{0} - ln(1+e^{b_{0}} \right]=\sum_{i=1}^{i=n} y_{i}b_{0} - n.ln(1+e^{b_{0}})
+\end{equation}
+
+This is a function of $b_{0}$ and it will have a maximum value for $b_{0}=b_{0}^{*}$ when
+\begin{equation}
+\frac{d}{db_{0}} \ell(b_{0}^{*}|H_{0})=\sum_{i=1}^{i=n}y_{i}-n \frac{e^{b_{0}^{*}}}{1+e^{b_{0}^{*}}}=0
+\end{equation}
+
+from which follows that the maximum is reached for the value $b_{0}=b_{0}^{*}$
+\begin{equation}
+b_{0}^{*}=ln \frac{\bar{y}}{1-\bar{y}}
+\end{equation}
+
+The maximum of the \emph{Log Likelihood} function under the null-hypothesis, $\ell_{0}$, is then
+\begin{equation}
+\ell_{0}=ln(\frac{\bar{y}}{1-\bar{y}})n\bar{y} - n.ln(1 + ln(\frac{\bar{y}}{1-\bar{y}}))
+\end{equation}
+
+The maximum of the \emph{Log Likelihood} function under the alternative hypothesis, $\ell_{a}$, is found by calculating equation \ref{eq:loglikelihoodlogit} with the values $b_{0}=\hat{b}_{0}$ and $b_{1}=\hat{b}_{1}$ that were found numerically:
+\begin{equation}
+    \ell_{a} =\sum_{i=1}^{i=n}\left[  y_{i}(\hat{b}_0 + \hat{b}_{1}x_{i})   - ln \left( 1 + e^{y_{i}(\hat{b}_0 + \hat{b}_{1}x_{i})} \right) \right]
+\end{equation}
+
+In an ideal case, the value of the \emph{Log Likelihood} function is 0 and the value of the \emph{Likelihood} function is 1. \emph{deviance} is a measure of the deviation of a model from the ideal and is defined as:
+\begin{equation}
+D=-2\ell=-2ln \mathcal{L}=ln (\frac{1}{\mathcal{L}^{2})}
+\end{equation}
+
+In the ideal case the \emph{deviance} is zero, for $\mathcal{L}=0.5$ it will be 1.386, for $\mathcal{L}=0.1$ it is 4.605 etc. 
+
+The \emph{deviances} under the null-hypothesis and under the alternative hypothesis are:
+\begin{equation}
+\begin{split}
+D_{0}&=-2\ell_{0}=ln (\frac{1}{\mathcal{L_{0}}^{2})} \\
+D_{a}&=-2\ell_{a}=ln (\frac{1}{\mathcal{L_{a}}^{2})}
+\end{split}
+\end{equation}
+
+These \emph{deviances} have respectively $df_{0}=(n-1)$ and $df_{a}=(n-2)$ degrees of freedom: under the null-hypothesis we only lose one degree of freedom by estimating $\beta_{0}$, while under the alternative hypothesis we lose two by estimating $\beta_{0}$ and $\beta_{1}$.
+
+It can be shown that for large sample sizes $n$ the difference $(D_{0}-D_{a})$ has a chi-square distribution with $df_{0}-df_{a}$ degrees of freedom. In this case $df_{0}-df_{a}=1$ and thus:
+\begin{equation}
+D_{0}-D_{a} \sim \chi^{2}_{(df_{0}-df{a})}=\chi^{2}_{1}
+\end{equation}
+
+With this distribution we can calculate the probability of finding the observed value of $D_{0}-D_{a}$ (or greater):
+\begin{equation}
+p=P[\chi^{2}_{1} \geq D_{0}-D_{a}]=1-pchisq(D_{a}-D_{0},df_{0}-df_{a})
+\end{equation}
+
+\medskip
+\newthought{Example: O-rings of the Challenger spacecraft}
+
+Calculating the p-value of the Likelihood Ration Test:
+<<>>=
+# Calculating the value of the Log Likelihood function under the null-hypothesis
+n <- nrow(challenger)
+bar_y <- mean(challenger$oring)
+b0_star <- log(bar_y/(1-bar_y))
+l0 <- b0_star*n*bar_y - n* log(1+exp(b0_star))
+# Calculating the value of the Log Likelihood function under the alternative hypothesis
+b0_hat <- tidymodF$estimate[1]
+b1_hat <- tidymodF$estimate[2]
+la <- sum(challenger$oring*(b0_hat + b1_hat*challenger$temp)) - sum(log(1 + exp(b0_hat + b1_hat*challenger$temp)))
+# Calculating deviances
+D0 <- -2*l0 
+Da <- -2*la 
+df0 <- n-1 
+dfa <- n-2 
+p <- 1 - pchisq(D0-Da,df0-dfa)
+print(paste("p=",p))
+@
+
+\medskip
+All this information can be found in the details of the glm-model:
+<<>>=
+broom::glance(modF)
+@
+
+\begin{itemize}
+  \item null.deviance=$D_{0}$
+  \item deviance=$D_{a}$
+  \item df.null=$df_{0}$
+  \item df.residual=$df_{a}$
+\end{itemize}
 \newpage
 \textbf{Thanks} \\
 \medskip
