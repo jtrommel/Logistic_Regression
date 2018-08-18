@@ -681,7 +681,60 @@ broom::glance(modF)
   \item deviance=$D_{a}$
   \item df.null=$df_{0}$
   \item df.residual=$df_{a}$
+  \item logLik=$l_{a}$ the value of the \emph{Log Likelihood} function of the full model (alternative hypothesis $H_{a}$)
+  \item AIC: the Akaike Information Criterion. It is comparable with the adjusted determination coefficient $R_{adj}^{2}$ of the linear regression model. It is helpfull when there are many independent variables because it penalises the increased use of more explanatory variables in the model. The formula is:
+  \begin{equation}
+  AIC=-2ln\mathcal{L_{a}} + 2k=D_{a}+2k
+  \end{equation}
+  where $k=$number of estimated parameters in the model (in this example $k=2$)
+  \item BIC: Bayesian Information Criterion: an alternative to the AIC, not included in the standard output of the \textit{glm}-function
+  \begin{equation}
+  BIC=-2ln\mathcal{L_{a}} + 2k.ln(n)=D_{a}+2k.ln(n)
+  \end{equation}
 \end{itemize}
+
+<<>>=
+k <- 2
+AIC <- Da + 2*k
+AIC
+BIC <- Da + 2*k*log(n)
+BIC
+@
+
+The p-value that we calculated $p=\Sexpr{round(p,4)}$ gives an appreciation of the quality of the \textbf{total} model.
+
+We can also find it by an \textit{anova}-analysis using the option ''LRT:Likelihood Ratio Test":
+
+<<>>=
+anova(modF, test="LRT")
+@
+
+\subsection{Wald test}
+The Wald test gives the p-values for the individual parameters $\beta_{0}$ and $\beta_{1}$
+\medskip
+<<>>=
+library(aod)
+wald.test(b=coef(modF),Sigma=vcov(modF),Terms=1)
+wald.test(b=coef(modF),Sigma=vcov(modF),Terms=2)
+@
+
+These are the values that we also find for $\beta_{0}$ and $\beta_{1}$ in the summary of the \textit{glm}-function:
+<<>>=
+tidy(modF)
+@
+
+\section{Using the logistic model for classification: the confusion matrix}
+
+The \emph{logistic model} will give us the probability $\pi(x_{i})$ that $Y(x_{i})=1$. We can switch back to a binary result by using a \emph{cut-off} value $co$ for the probabilities: if $\pi(x_{i})<co$ then we set $Y(x_{i})=0$, if $\pi(x_{i})>co$ then we set $Y(x_{i})=1$\sidenote{You have to decide what happens when $\pi(x_{i})=co$}. 
+
+Then we compare our theoretical classification with the results from the experiment. We group the results into four quadrants of the \emph{confusion matrix}: 
+\begin{itemize}
+  \item quadrant I: $Y(x_{i})$ is predicted ''1" and is in reality ''1"
+  \item quadrant II: $Y(x_{i})$ is predicted ''1" and is in reality ''0"
+  \item quadrant III: $Y(x_{i})$ is predicted ''0" and is in reality ''1"
+  \item quadrant IV: $Y(x_{i})$ is predicted ''0" and is in reality ''0"
+\end{itemize}
+
 \newpage
 \textbf{Thanks} \\
 \medskip
