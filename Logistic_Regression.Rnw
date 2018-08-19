@@ -62,6 +62,7 @@
 library(tidyverse)
 library(gridExtra)
 library(broom)
+library(mcsm)
 library(scatterplot3d)
 @
 
@@ -538,24 +539,26 @@ The \emph{Log-Likelihood} function will have values between $-\infty$ and $0$.
 
 In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical techniques such as the \emph{Newton-Raphson method}. Essentially it involves a iterative process in which a set of equtions based on the \emph{Hessian matrix} and the \emph{gradient vector} of the \emph{Log Likelihood function}\sidenote{See: "Finding the maximum of the (log) likelihood function with the Newton-Raphson method"}. In R this is done by the \textit{glm(family=binomial(link="logit"))} function (General Linear Model), where we specify that we assume the process to be ''binomial", and the link function to be ''logit".
 
-\newthought{Example: O-rings of the Challenger spacecraft}
+\newthought{Example}
 
-In the ''mcsm"-package data are given relating to the accident with the Challenger spacecraft, January 1986. O-rings were used to seal compartiments, but it was known that the failure of these rings depended on the temperature. The data are given by the following scatterplot (Figure~\ref{fig:scatter}). ''Failure" is coded as ''1".
-<<>>=
-data.df <- data.frame(studytime=c(0.5, 0.75, 1, 1.25, 1.5, 1.75, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 4, 4.25, 4.5, 4.75, 5, 5.5), pass=c(0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1))
+The data\sidenote{Two data sets are available: the ''Challenger" data (temperature and o-ring failure), and ''Studytime vs pass" data (relation between hours of study and passing a test)} are given by the following scatterplot (Figure~\ref{fig:scatter}). ''Failure" is coded as ''1" in the ''Challenger" data set, and coded as ''0" in the ''Studytime" data set.
+<<echo=FALSE>>=
+# Two data sets
+study.pass <- data.frame(studytime=c(0.5, 0.75, 1, 1.25, 1.5, 1.75, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 4, 4.25, 4.5, 4.75, 5, 5.5), pass=c(0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1))
+data(challenger)
+challenger.disaster <- data.frame(temp=challenger[,2],oring=challenger[,1])
 @
 <<label=scatter,fig=TRUE,include=FALSE, echo=FALSE>>=
-library(mcsm)
-# data.df <- challenger
-ggplot(data=data.df) + 
-  geom_point(aes(x=studytime, y=pass)) +
-    labs(title="Scatterplot O-ring failure", xlab="temperature (F)", ylab="failure: 1=yes, 0=no") +
+data.df <- challenger.disaster
+ggplot() + 
+  geom_point(aes(x=data.df[,1], y=data.df[,2])) +
+  labs(title="Scatterplot", x=colnames(data.df)[1], y=colnames(data.df)[2]) +
   JT.theme
 @
 
-\begin{marginfigure}
+\begin{marginfigure}[3cm]
 \includegraphics[width=1\textwidth]{LR-scatter}
-\caption{Scatterplot of O-ring failure as a function of temperature}
+\caption{Scatterplot of response variable vs. independent variable}
 \label{fig:scatter}
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
@@ -563,7 +566,7 @@ ggplot(data=data.df) +
 We find the values for $b_{0}$ and $b_{1}$ that maximize the \emph{(Log) Likelihood} function using the \textit{glm}-function in R, ''family=binomial" and ''link function = logit". The result is superimposed on the data in Figure~\ref{fig:scatterplusmodel}.
 
 <<>>=
-mod.lr <- glm(pass~studytime,data=data.df,
+mod.lr <- glm(data.df[,2]~data.df[,1],data=data.df,
             family=binomial(link="logit"))
 tidymod.lr <- broom::tidy(mod.lr)
 tidymod.lr
@@ -572,13 +575,14 @@ tidymod.lr
 <<label=scatterplusmodel,fig=TRUE,include=FALSE, echo=FALSE>>=
 model.lr <- data.frame(x=seq(min(data.df[,1]), max(data.df[,1]), length.out = 25), y=0)
 model.lr$y <- 1/(1+exp(-(mod.lr$coefficients[1] + mod.lr$coefficients[2]*model.lr$x)))
-ggplot(data=data.df, aes(x=studytime, pass)) + 
-  geom_point() + 
+ggplot() + 
+  geom_point(data = data.df, aes(x=data.df[,1], data.df[,2])) + 
   geom_line(data = model.lr, aes(x=x, y=y), colour="red") +
+  labs(title="Scatterplot and Logistic regression model", x=colnames(data.df)[1], y=colnames(data.df)[2]) +
   JT.theme 
 @
 
-\begin{marginfigure}
+\begin{marginfigure}[1cm]
 \includegraphics[width=1\textwidth]{LR-scatterplusmodel}
 \caption{Scatterplot and logistic regression model}
 \label{fig:scatterplusmodel}
@@ -656,8 +660,8 @@ With this distribution we can calculate the probability of finding the observed 
 p=P[\chi^{2}_{1} \geq D_{0}-D_{a}]=1-pchisq(D_{a}-D_{0},df_{0}-df_{a})
 \end{equation}
 
-\medskip
-\newthought{Example: O-rings of the Challenger spacecraft}
+\newpage
+\newthought{Example}
 
 Calculating the p-value of the Likelihood Ration Test:
 <<>>=
@@ -777,7 +781,7 @@ ggplot(data=co_influence) +
   JT.theme
 @
 
-\begin{marginfigure}[-9cm]
+\begin{marginfigure}[0cm]
 \includegraphics[width=1\textwidth]{LR-coinfluence}
 \caption{Influence of the cut-off point on the proportion of incorrect predictions}
 \label{fig:coinfluence}
@@ -798,7 +802,7 @@ ggplot(data=co_influence) +
   JT.theme
 @
 
-\begin{marginfigure}[-9cm]
+\begin{marginfigure}[0cm]
 \includegraphics[width=1\textwidth]{LR-ROC}
 \caption{Influence of the cut-off point on the proportion of incorrect predictions}
 \label{fig:ROC}
