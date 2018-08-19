@@ -541,12 +541,14 @@ In logistical regression the criterium is to find the \emph{maximum} of the like
 \newthought{Example: O-rings of the Challenger spacecraft}
 
 In the ''mcsm"-package data are given relating to the accident with the Challenger spacecraft, January 1986. O-rings were used to seal compartiments, but it was known that the failure of these rings depended on the temperature. The data are given by the following scatterplot (Figure~\ref{fig:scatter}). ''Failure" is coded as ''1".
-
+<<>>=
+data.df <- data.frame(studytime=c(0.5, 0.75, 1, 1.25, 1.5, 1.75, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 4, 4.25, 4.5, 4.75, 5, 5.5), pass=c(0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1))
+@
 <<label=scatter,fig=TRUE,include=FALSE, echo=FALSE>>=
 library(mcsm)
-data(challenger)
-ggplot(data=challenger) + 
-  geom_point(aes(x=temp, y=oring)) +
+# data.df <- challenger
+ggplot(data=data.df) + 
+  geom_point(aes(x=studytime, y=pass)) +
     labs(title="Scatterplot O-ring failure", xlab="temperature (F)", ylab="failure: 1=yes, 0=no") +
   JT.theme
 @
@@ -561,18 +563,18 @@ ggplot(data=challenger) +
 We find the values for $b_{0}$ and $b_{1}$ that maximize the \emph{(Log) Likelihood} function using the \textit{glm}-function in R, ''family=binomial" and ''link function = logit". The result is superimposed on the data in Figure~\ref{fig:scatterplusmodel}.
 
 <<>>=
-modF <- glm(oring~temp,data=challenger,
+mod.lr <- glm(pass~studytime,data=data.df,
             family=binomial(link="logit"))
-tidymodF <- broom::tidy(modF)
-tidymodF
+tidymod.lr <- broom::tidy(mod.lr)
+tidymod.lr
 @
 
 <<label=scatterplusmodel,fig=TRUE,include=FALSE, echo=FALSE>>=
-modelF <- data.frame(x=seq(52, 82, 1), y=0)
-modelF$y <- 1/(1+exp(-(modF$coefficients[1] + modF$coefficients[2]*modelF$x)))
-ggplot(data=challenger, aes(x=temp, y=oring)) + 
+model.lr <- data.frame(x=seq(min(data.df[,1]), max(data.df[,1]), length.out = 25), y=0)
+model.lr$y <- 1/(1+exp(-(mod.lr$coefficients[1] + mod.lr$coefficients[2]*model.lr$x)))
+ggplot(data=data.df, aes(x=studytime, pass)) + 
   geom_point() + 
-  geom_line(data = modelF, aes(x=x, y=y), colour="red") +
+  geom_line(data = model.lr, aes(x=x, y=y), colour="red") +
   JT.theme 
 @
 
@@ -585,7 +587,7 @@ ggplot(data=challenger, aes(x=temp, y=oring)) +
 
 \section{Quality of the regression model}
 
-\subsection{Hypothesis test}
+\subsection{Hypothesis test: the Likelihood Ratio Test}
 
 When we use the ''logit" link function we assume that the probability $P[Y_{i}=1]=\pi(x_{i})$ depends on $x_{i}$:
 
@@ -630,8 +632,8 @@ In the ideal case the \emph{deviance} is zero, for $\mathcal{L}=0.5$ it will be 
 The \emph{deviances} under the null-hypothesis and under the alternative hypothesis are:
 \begin{equation}
 \begin{split}
-D_{0}&=-2\ell_{0}=ln (\frac{1}{\mathcal{L_{0}}^{2})} \\
-D_{a}&=-2\ell_{a}=ln (\frac{1}{\mathcal{L_{a}}^{2})}
+D_{0}&=-2\ell_{0}=ln (\frac{1}{\mathcal{L}_{0}^{2}}) \\
+D_{a}&=-2\ell_{a}=ln (\frac{1}{\mathcal{L}_{a}^{2}})
 \end{split}
 \end{equation}
 
@@ -641,6 +643,13 @@ It can be shown that for large sample sizes $n$ the difference $(D_{0}-D_{a})$ h
 \begin{equation}
 D_{0}-D_{a} \sim \chi^{2}_{(df_{0}-df{a})}=\chi^{2}_{1}
 \end{equation}
+
+The difference $(D_{0}-D_{a})$ can be written as:
+\begin{equation}
+D_{0}-D_{a}=ln (\frac{1}{\mathcal{L}_{0}^{2}}) - ln (\frac{1}{\mathcal{L}_{a}^{2}}) = ln (\frac{\mathcal{L}_{a}^{2}}{\mathcal{L}_{0}^{2}}) = 2 ln (\frac{\mathcal{L}_{a}}{\mathcal{L}_{0}})
+\end{equation}
+
+It is twice the (natural) logaritm of the \emph{Likelihood Ratio} with in the numerator the value of the \emph{Likelihood} function under the alternative hypothesis, and in the denominator the value of the \emph{Likelihood} function under the null hypothesis. Therefore this hypothesis test is called the \emph{Likelihood Ratio Test (LRT)}
 
 With this distribution we can calculate the probability of finding the observed value of $D_{0}-D_{a}$ (or greater):
 \begin{equation}
@@ -653,14 +662,14 @@ p=P[\chi^{2}_{1} \geq D_{0}-D_{a}]=1-pchisq(D_{a}-D_{0},df_{0}-df_{a})
 Calculating the p-value of the Likelihood Ration Test:
 <<>>=
 # Calculating the value of the Log Likelihood function under the null-hypothesis
-n <- nrow(challenger)
-bar_y <- mean(challenger$oring)
+n <- nrow(data.df)
+bar_y <- mean(data.df[,2])
 b0_star <- log(bar_y/(1-bar_y))
 l0 <- b0_star*n*bar_y - n* log(1+exp(b0_star))
 # Calculating the value of the Log Likelihood function under the alternative hypothesis
-b0_hat <- tidymodF$estimate[1]
-b1_hat <- tidymodF$estimate[2]
-la <- sum(challenger$oring*(b0_hat + b1_hat*challenger$temp)) - sum(log(1 + exp(b0_hat + b1_hat*challenger$temp)))
+b0_hat <- tidymod.lr$estimate[1]
+b1_hat <- tidymod.lr$estimate[2]
+la <- sum(data.df[,2]*(b0_hat + b1_hat*data.df[,1])) - sum(log(1 + exp(b0_hat + b1_hat*data.df[,1])))
 # Calculating deviances
 D0 <- -2*l0 
 Da <- -2*la 
@@ -673,7 +682,7 @@ print(paste("p=",p))
 \medskip
 All this information can be found in the details of the glm-model:
 <<>>=
-broom::glance(modF)
+broom::glance(mod.lr)
 @
 
 \begin{itemize}
@@ -706,7 +715,7 @@ The p-value that we calculated $p=\Sexpr{round(p,4)}$ gives an appreciation of t
 We can also find it by an \textit{anova}-analysis using the option ''LRT:Likelihood Ratio Test":
 
 <<>>=
-anova(modF, test="LRT")
+anova(mod.lr, test="LRT")
 @
 
 \subsection{Wald test}
@@ -714,13 +723,13 @@ The Wald test gives the p-values for the individual parameters $\beta_{0}$ and $
 \medskip
 <<>>=
 library(aod)
-wald.test(b=coef(modF),Sigma=vcov(modF),Terms=1)
-wald.test(b=coef(modF),Sigma=vcov(modF),Terms=2)
+wald.test(b=coef(mod.lr),Sigma=vcov(mod.lr),Terms=1)
+wald.test(b=coef(mod.lr),Sigma=vcov(mod.lr),Terms=2)
 @
 
 These are the values that we also find for $\beta_{0}$ and $\beta_{1}$ in the summary of the \textit{glm}-function:
 <<>>=
-tidy(modF)
+tidy(mod.lr)
 @
 
 \section{Using the logistic model for classification: the confusion matrix}
@@ -729,11 +738,72 @@ The \emph{logistic model} will give us the probability $\pi(x_{i})$ that $Y(x_{i
 
 Then we compare our theoretical classification with the results from the experiment. We group the results into four quadrants of the \emph{confusion matrix}: 
 \begin{itemize}
-  \item quadrant I: $Y(x_{i})$ is predicted ''1" and is in reality ''1"
-  \item quadrant II: $Y(x_{i})$ is predicted ''1" and is in reality ''0"
-  \item quadrant III: $Y(x_{i})$ is predicted ''0" and is in reality ''1"
-  \item quadrant IV: $Y(x_{i})$ is predicted ''0" and is in reality ''0"
+  \item quadrant I: $Y(x_{i})$ is predicted ''0" and is in reality ''0": True Negative=TN
+  \item quadrant II: $Y(x_{i})$ is predicted ''0" and is in reality ''1": False Negative=FN
+  \item quadrant III: $Y(x_{i})$ is predicted ''1" and is in reality ''0": False Positive=FP
+  \item quadrant IV: $Y(x_{i})$ is predicted ''1" and is in reality ''1": True Positive=TP
 \end{itemize}
+
+<<>>=
+co <- 0.5
+confusion_matrix <- table(data.df[,2],predict(mod.lr) > co)
+confusion_matrix
+@
+
+It is clear that the choice of the \emph{cut-off} point is of major influence. We can measure the effect of different values of the \emph{cut-off} point, by calculating the proportion of incorrect predictions, this is
+\begin{equation}
+Q = \frac{FN + FP}{n}
+\end{equation}
+
+In this case $Q=\Sexpr{round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,3)}$.
+
+Figure~\ref{fig:coinfluence} shows what happens to $Q$ when we choose different values for the cut-off point. Any cut-off value higher than 0.40 will give us a higher value for $Q$. So we pick the cut-off point at 0.4 and our confusion matrix will be:
+<<>>=
+co <- 0.4
+confusion_matrix <- table(data.df[,2],predict(mod.lr) > co)
+confusion_matrix
+Q <- round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,3)
+Q
+@
+
+<<label=coinfluence,fig=TRUE,include=FALSE, echo=FALSE>>=
+co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), Q=0)
+for (i in seq(1:100)){
+co_influence$Q[i] <- (table(data.df[,2],predict(mod.lr)>co_influence$co[i])[1,2] + table(data.df[,2],predict(mod.lr)>co_influence$co[i])[2,1])/n 
+}
+ggplot(data=co_influence) +
+  geom_line(aes(x=co, y=Q)) +
+  labs(title="Influence of cut-off point on the\nproportion of incorrect predictions", xlab="co", ylab="Q") +
+  JT.theme
+@
+
+\begin{marginfigure}[-9cm]
+\includegraphics[width=1\textwidth]{LR-coinfluence}
+\caption{Influence of the cut-off point on the proportion of incorrect predictions}
+\label{fig:coinfluence}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{marginfigure}
+
+There does not seem to be a great difference. However: we have to look a the specific situation. In view of the fact that the consequence of a failing o-ring could be (and in reality were) disastrous, we clearly do not want a model that leads to a classification where we predict ''Safe" (which in this case is coded as ''0"), while the reality is that it ''Fails" (coded as a ''1"). We do not want a False Negative. A False Positive means that the model classifies the situation as ''Fails" (coded asa ''1"), while the reality is ''Safe" (coded as ''0"). This is annoying (the launch is delayed until the temperature is higher), it will probably cost money, but these consequences are incomparable with the loss of life. We see that whatever value we choose for the cut-off point, there are never False Negatives. So that is a relief. Than we better choose a cut-off value lower than 0.4, because that reduces the False Positives from 4 to 3.
+
+<<label=ROC,fig=TRUE,include=FALSE, echo=FALSE>>=
+co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), FP=0, TP=0)
+for (i in seq(1:100)){
+co_influence$FP[i] <- (table(data.df[,2],predict(mod.lr)>co_influence$co[i])[1,2])/n
+co_influence$TP[i] <- (table(data.df[,2],predict(mod.lr)>co_influence$co[i])[2,1])/n
+}
+ggplot(data=co_influence) +
+  geom_line(aes(x=FP, y=TP)) +
+  labs(title="Receiver Operating Characteristic", xlab="FP", ylab="TP") +
+  JT.theme
+@
+
+\begin{marginfigure}[-9cm]
+\includegraphics[width=1\textwidth]{LR-ROC}
+\caption{Influence of the cut-off point on the proportion of incorrect predictions}
+\label{fig:ROC}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{marginfigure}
 
 \newpage
 \textbf{Thanks} \\
