@@ -472,7 +472,7 @@ p3 <- ggplot(data=df_pandf, aes(x=x)) +
   geom_line(aes(y=y8), color="blue") +
   geom_text(x=-4, y=0.25, label="+1", color="red") +
   geom_text(x=4, y=0.25, label="-1", color="blue") +
-  labs(title="sign of beta1\nchanges direction", xlab="x", ylab="y") +
+  labs(title="sign of beta1\nchanges direction", x="x", y="y") +
   JT.theme
 grid.arrange(p1, p2, p3, ncol=3)
 @
@@ -738,17 +738,32 @@ tidy(mod.lr)
 
 \section{Using the logistic model for classification: the confusion matrix}
 
-The \emph{logistic model} will give us the probability $\pi(x_{i})$ that $Y(x_{i})=1$. We can switch back to a binary result by using a \emph{cut-off} value $co$ for the probabilities: if $\pi(x_{i})<co$ then we set $Y(x_{i})=0$, if $\pi(x_{i})>co$ then we set $Y(x_{i})=1$\sidenote{You have to decide what happens when $\pi(x_{i})=co$}. 
+The \emph{logistic model} can be used to give predictions. 
 
-Then we compare our theoretical classification with the results from the experiment. We group the results into four quadrants of the \emph{confusion matrix}: 
 \begin{itemize}
-  \item quadrant I: $Y(x_{i})$ is predicted ''0" and is in reality ''0": True Negative=TN
-  \item quadrant II: $Y(x_{i})$ is predicted ''0" and is in reality ''1": False Negative=FN
-  \item quadrant III: $Y(x_{i})$ is predicted ''1" and is in reality ''0": False Positive=FP
-  \item quadrant IV: $Y(x_{i})$ is predicted ''1" and is in reality ''1": True Positive=TP
+  \item Using \textit{predict(glm.model)} will give us the \emph{logit} function:
+    \begin{equation}
+    predict(glm.model)=logit\left( \pi(x_{i})  \right)=b_{0} + b_{1}x_{i}
+    \end{equation}
+  \item Using \textit{predict(glm.model, type="outcomes)} will give us the probabilities $\pi(x_{i})$, i.e. the results of applying the sigmoid link function to the results of the \emph{logit} function:
+    \begin{equation}
+    predict(glm.model, type="outcomes") = \frac{e^{ b_{0} + b_{1}x_{i}}}{1+e^{ b_{0} + b_{1}x_{i}}} = \frac{1}{1 + e^{-( b_{0} + b_{1}x_{i})}}
+    \end{equation}
 \end{itemize}
 
-<<>>=
+We can switch back to a binary result by using a \emph{cut-off} value $co$ for the probabilities: if $\pi(x_{i})<co$ then we set $Y(x_{i})=0$, if $\pi(x_{i})>co$ then we set $Y(x_{i})=1$\sidenote{You have to decide what happens when $\pi(x_{i})=co$}. 
+
+Then we compare our theoretical classification with the results from the experiment. We group the results into four quadrants of the \emph{confusion matrix} (Table~\ref{tab:co05}): 
+\begin{itemize}
+  \item quadrant I:  prediction = ''TRUE" and the observation = ''1": True Positive = TP
+  \item quadrant II: prediction = ''TRUE" and the observation = ''0": False Positive = FP
+  \item quadrant III: prediction = ''FALSE" and the observation = ''1": True Negative = FN
+  \item quadrant IV: prediction = ''FALSE" and the observation = ''0": True Negative = TN
+\end{itemize}
+
+The words ''TRUE/FALSE" and the observation codes ''0/1" should always be interpreted carefully: in the Challenger case the prediction ''TRUE" is equivalent to saying that the model predicts that the o-ring will fail. An observation coded ''0" means that the o-ring was not damaged.
+
+<<echo=FALSE>>=
 co <- 0.5
 comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
 for (i in (1:nrow(comp.lr))) {
@@ -756,65 +771,111 @@ for (i in (1:nrow(comp.lr))) {
   if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 1) {comp.lr$group.name[i]=as.character("FN")}
   if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("TN")}
 }
-paste("number TP=",sum(comp.lr$group.name == "TP"))
-paste("number FP=",sum(comp.lr$group.name == "FP"))
-paste("number FN=",sum(comp.lr$group.name == "FN"))
-paste("number TN=",sum(comp.lr$group.name == "TN"))
+TP <- sum(comp.lr$group.name=="TP")
+FP <- sum(comp.lr$group.name=="FP")
+FN <- sum(comp.lr$group.name=="FN")
+TN <- sum(comp.lr$group.name=="TN")
+@
+
+\begin{margintable}[-8cm]
+\begin{tabular}{r c c l}
+Prediction$\downarrow$ & 1 & 0 & $\leftarrow$Observation \\
+TRUE & TP=$\Sexpr{TP}$ & FP=$\Sexpr{FP}$ &\\
+FALSE & FN=$\Sexpr{FN}$ & TN=$\Sexpr{TN}$ &
+\end{tabular}
+\caption{Confusion matrix; cut-off=0.5}
+\label{tab:co05}
+\end{margintable}
+
+\newpage
+In R we can create this table with the function \textit{table} but the quadrants are differently alligned:
+<<>>=
 confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") > co)
 confusion_matrix
 @
 
-It is clear that the choice of the \emph{cut-off} point is of major influence. We can measure the effect of different values of the \emph{cut-off} point, by calculating the proportion of incorrect predictions, this is
+It is clear that the choice of the \emph{cut-off} point is of major influence. We can measure the effect of different values of the \emph{cut-off} point, by calculating the proportion of predictions, this is
 \begin{equation}
-Q = \frac{FN + FP}{n}
+Q = \frac{TP + TN}{n}
 \end{equation}
 
-We are trying to get $Q$ as low as possible. In this case $Q=\Sexpr{round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,4)}$.
+We are trying to get $Q$ as high as possible.
 
-Figure~\ref{fig:coinfluence} shows what happens to $Q$ when we choose different values for the cut-off point. Any cut-off value higher than 0.40 will give us a higher value for $Q$. So we pick the cut-off point at 0.4 and our confusion matrix will be:
-<<>>=
-co <- 0.4
+Figure~\ref{fig:coinfluence} shows what happens to $Q$ when we choose different values for the cut-off point.
+
+<<label=coinfluence,fig=TRUE,include=FALSE, echo=FALSE>>=
+co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), Q=0)
+for (i in seq(1:100)){
+co_influence$Q[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[1,1] + table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,2])/n 
+}
+ggplot(data=co_influence) +
+  geom_line(aes(x=co, y=Q)) +
+  labs(title="Influence of cut-off point on the\nproportion of correct predictions", x="co", y="Q") +
+  JT.theme
+@
+
+\begin{marginfigure}[0cm]
+\includegraphics[width=1\textwidth]{LR-coinfluence}
+\caption{Influence of the cut-off point on the proportion of correct predictions}
+\label{fig:coinfluence}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{marginfigure}
+
+It seems that a cut-off value around 0.5 does indeed give the highest proportion of correct predictions. However, in view of the fact that the consequence of a failing o-ring could be (and in reality were) disastrous, we clearly do not want a model that leads to a classification where we predict ''Safe" (which in this case is coded as ''0"), while the reality is that it ''Fails" (coded as a ''1"). We do not want a False Negative. A False Positive means that the model classifies the situation as ''Fails" (coded as ''1"), while the reality is ''Safe" (coded as ''0"). This is annoying (the launch is delayed until the temperature is higher) and it will cost money, but these consequences are incomparable with the loss of life. We should therefore choose $co$ to minimize the False Negatives, even at the cost of higher False Positives. 
+
+<<label=coinfluenceFN,fig=TRUE,include=FALSE, echo=FALSE>>=
+co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), FN=0)
+for (i in seq(1:100)){
+co_influence$FN[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,1])/n 
+}
+ggplot(data=co_influence) +
+  geom_line(aes(x=co, y=FN)) +
+  labs(title="Influence of cut-off point on the\nproportion of False Negatives", x="co", y="FN") +
+  JT.theme
+@
+\begin{marginfigure}[0cm]
+\includegraphics[width=1\textwidth]{LR-coinfluenceFN}
+\caption{Influence of the cut-off point on the proportion of False Negatives}
+\label{fig:coinfluenceFN}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{marginfigure}
+
+Low values of the cut-off point (e.g. $co=0.2$) seem to be more appropriate in view of the catastrophical consequences of a False Negative. 
+<<echo=FALSE>>=
+co <- 0.2
 comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
 for (i in (1:nrow(comp.lr))) {
   if(comp.lr$pred[i] == 1 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("FP")}
   if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 1) {comp.lr$group.name[i]=as.character("FN")}
   if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("TN")}
 }
-paste("number TP=",sum(comp.lr$group.name == "TP"))
-paste("number FP=",sum(comp.lr$group.name == "FP"))
-paste("number FN=",sum(comp.lr$group.name == "FN"))
-paste("number TN=",sum(comp.lr$group.name == "TN"))
-confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") > co)
-confusion_matrix
-Q <- round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,3)
-Q
+TP <- sum(comp.lr$group.name=="TP")
+FP <- sum(comp.lr$group.name=="FP")
+FN <- sum(comp.lr$group.name=="FN")
+TN <- sum(comp.lr$group.name=="TN")
+Q <- (TP + TN)/n
 @
 
-<<label=coinfluence,fig=TRUE,include=FALSE, echo=FALSE>>=
-co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), Q=0)
-for (i in seq(1:100)){
-co_influence$Q[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[1,2] + table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,1])/n 
-}
-ggplot(data=co_influence) +
-  geom_line(aes(x=co, y=Q)) +
-  labs(title="Influence of cut-off point on the\nproportion of incorrect predictions", xlab="co", ylab="Q") +
-  JT.theme
-@
+\begin{margintable}
+\begin{tabular}{r c c l}
+Prediction$\downarrow$ & 1 & 0 & $\leftarrow$Observation \\
+TRUE & TP=$\Sexpr{TP}$ & FP=$\Sexpr{FP}$ &\\
+FALSE & FN=$\Sexpr{FN}$ & TN=$\Sexpr{TN}$ &
+\end{tabular}
+\caption{Confusion matrix; cut-off=0.2}
+\label{tab:co02}
+\end{margintable}
 
-\begin{marginfigure}[0cm]
-\includegraphics[width=1\textwidth]{LR-coinfluence}
-\caption{Influence of the cut-off point on the proportion of incorrect predictions}
-\label{fig:coinfluence}
-\setfloatalignment{b}% forces caption to be bottom-aligned
-\end{marginfigure}
+In this case the confusion matrix is given in Table~\ref{tab:co02}: only one False Negative but with a lower quality of our classification: $Q=\Sexpr{round(Q,3)}$.
 
-In view of the fact that the consequence of a failing o-ring could be (and in reality were) disastrous, we clearly do not want a model that leads to a classification where we predict ''Safe" (which in this case is coded as ''0"), while the reality is that it ''Fails" (coded as a ''1"). We do not want a False Negative. A False Positive means that the model classifies the situation as ''Fails" (coded as ''1"), while the reality is ''Safe" (coded as ''0"). This is annoying (the launch is delayed until the temperature is higher) and it will cost money, but these consequences are incomparable with the loss of life. We should therefore choose $co$ to minimize the False Negatives, even at the cost of higher False Positives. We can see this is a \emph{Receiver Operating Characteristic} (Figure~\ref{fig:ROC}).
+\newpage
+We can see this is a \emph{Receiver Operating Characteristic} (Figure~\ref{fig:ROC}).
 
 <<label=ROC,fig=TRUE,include=FALSE, echo=FALSE>>=
-co_influence <- data.frame(co=seq(0.1, 0.9, by=0.05), FP=0, TP=0)
+co_influence <- data.frame(co=seq(0.1, 0.9, by=0.1), FP=0, TP=0)
 for (i in seq(1:nrow(co_influence))){
 co_influence$FP[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[1,2])/n
-co_influence$TP[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,1])/n
+co_influence$TP[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,2])/n
 }
 ggplot(data=co_influence) +
   geom_line(aes(x=FP, y=TP)) +
@@ -832,6 +893,24 @@ ggplot(data=co_influence) +
 \end{marginfigure}
 
 A choice of the cut-off point equal to 0.2 seems appropriate.
+
+<<echo=FALSE>>=
+co <- 0.2
+comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
+for (i in (1:nrow(comp.lr))) {
+  if(comp.lr$pred[i] == 1 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("FP")}
+  if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 1) {comp.lr$group.name[i]=as.character("FN")}
+  if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("TN")}
+}
+paste("number TP=",sum(comp.lr$group.name == "TP"))
+paste("number FP=",sum(comp.lr$group.name == "FP"))
+paste("number FN=",sum(comp.lr$group.name == "FN"))
+paste("number TN=",sum(comp.lr$group.name == "TN"))
+confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") > co)
+confusion_matrix
+Q <- round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,3)
+Q
+@
 
 \newpage
 \textbf{Thanks} \\
