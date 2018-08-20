@@ -702,7 +702,7 @@ broom::glance(mod.lr)
   where $k=$number of estimated parameters in the model (in this example $k=2$)
   \item BIC: Bayesian Information Criterion: an alternative to the AIC, not included in the standard output of the \textit{glm}-function
   \begin{equation}
-  BIC=-2ln\mathcal{L_{a}} + 2k.ln(n)=D_{a}+2k.ln(n)
+  BIC=-2ln\mathcal{L_{a}} + k.ln(n)=D_{a}+k.ln(n)
   \end{equation}
 \end{itemize}
 
@@ -710,7 +710,7 @@ broom::glance(mod.lr)
 k <- 2
 AIC <- Da + 2*k
 AIC
-BIC <- Da + 2*k*log(n)
+BIC <- Da + k*log(n)
 BIC
 @
 
@@ -750,7 +750,17 @@ Then we compare our theoretical classification with the results from the experim
 
 <<>>=
 co <- 0.5
-confusion_matrix <- table(data.df[,2],predict(mod.lr) > co)
+comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
+for (i in (1:nrow(comp.lr))) {
+  if(comp.lr$pred[i] == 1 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("FP")}
+  if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 1) {comp.lr$group.name[i]=as.character("FN")}
+  if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("TN")}
+}
+paste("number TP=",sum(comp.lr$group.name == "TP"))
+paste("number FP=",sum(comp.lr$group.name == "FP"))
+paste("number FN=",sum(comp.lr$group.name == "FN"))
+paste("number TN=",sum(comp.lr$group.name == "TN"))
+confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") > co)
 confusion_matrix
 @
 
@@ -759,12 +769,22 @@ It is clear that the choice of the \emph{cut-off} point is of major influence. W
 Q = \frac{FN + FP}{n}
 \end{equation}
 
-In this case $Q=\Sexpr{round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,3)}$.
+We are trying to get $Q$ as low as possible. In this case $Q=\Sexpr{round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,4)}$.
 
 Figure~\ref{fig:coinfluence} shows what happens to $Q$ when we choose different values for the cut-off point. Any cut-off value higher than 0.40 will give us a higher value for $Q$. So we pick the cut-off point at 0.4 and our confusion matrix will be:
 <<>>=
 co <- 0.4
-confusion_matrix <- table(data.df[,2],predict(mod.lr) > co)
+comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
+for (i in (1:nrow(comp.lr))) {
+  if(comp.lr$pred[i] == 1 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("FP")}
+  if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 1) {comp.lr$group.name[i]=as.character("FN")}
+  if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("TN")}
+}
+paste("number TP=",sum(comp.lr$group.name == "TP"))
+paste("number FP=",sum(comp.lr$group.name == "FP"))
+paste("number FN=",sum(comp.lr$group.name == "FN"))
+paste("number TN=",sum(comp.lr$group.name == "TN"))
+confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") > co)
 confusion_matrix
 Q <- round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,3)
 Q
@@ -773,7 +793,7 @@ Q
 <<label=coinfluence,fig=TRUE,include=FALSE, echo=FALSE>>=
 co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), Q=0)
 for (i in seq(1:100)){
-co_influence$Q[i] <- (table(data.df[,2],predict(mod.lr)>co_influence$co[i])[1,2] + table(data.df[,2],predict(mod.lr)>co_influence$co[i])[2,1])/n 
+co_influence$Q[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[1,2] + table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,1])/n 
 }
 ggplot(data=co_influence) +
   geom_line(aes(x=co, y=Q)) +
@@ -788,16 +808,18 @@ ggplot(data=co_influence) +
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-There does not seem to be a great difference. However: we have to look a the specific situation. In view of the fact that the consequence of a failing o-ring could be (and in reality were) disastrous, we clearly do not want a model that leads to a classification where we predict ''Safe" (which in this case is coded as ''0"), while the reality is that it ''Fails" (coded as a ''1"). We do not want a False Negative. A False Positive means that the model classifies the situation as ''Fails" (coded asa ''1"), while the reality is ''Safe" (coded as ''0"). This is annoying (the launch is delayed until the temperature is higher), it will probably cost money, but these consequences are incomparable with the loss of life. We see that whatever value we choose for the cut-off point, there are never False Negatives. So that is a relief. Than we better choose a cut-off value lower than 0.4, because that reduces the False Positives from 4 to 3.
+In view of the fact that the consequence of a failing o-ring could be (and in reality were) disastrous, we clearly do not want a model that leads to a classification where we predict ''Safe" (which in this case is coded as ''0"), while the reality is that it ''Fails" (coded as a ''1"). We do not want a False Negative. A False Positive means that the model classifies the situation as ''Fails" (coded as ''1"), while the reality is ''Safe" (coded as ''0"). This is annoying (the launch is delayed until the temperature is higher) and it will cost money, but these consequences are incomparable with the loss of life. We should therefore choose $co$ to minimize the False Negatives, even at the cost of higher False Positives. We can see this is a \emph{Receiver Operating Characteristic} (Figure~\ref{fig:ROC}).
 
 <<label=ROC,fig=TRUE,include=FALSE, echo=FALSE>>=
-co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), FP=0, TP=0)
-for (i in seq(1:100)){
-co_influence$FP[i] <- (table(data.df[,2],predict(mod.lr)>co_influence$co[i])[1,2])/n
-co_influence$TP[i] <- (table(data.df[,2],predict(mod.lr)>co_influence$co[i])[2,1])/n
+co_influence <- data.frame(co=seq(0.1, 0.9, by=0.05), FP=0, TP=0)
+for (i in seq(1:nrow(co_influence))){
+co_influence$FP[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[1,2])/n
+co_influence$TP[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,1])/n
 }
 ggplot(data=co_influence) +
   geom_line(aes(x=FP, y=TP)) +
+  geom_point(aes(x=FP, y=TP)) +
+  geom_text(aes(x=FP, y=TP, label=co), hjust=0.2, vjust=1) +
   labs(title="Receiver Operating Characteristic", xlab="FP", ylab="TP") +
   JT.theme
 @
@@ -808,6 +830,8 @@ ggplot(data=co_influence) +
 \label{fig:ROC}
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
+
+A choice of the cut-off point equal to 0.2 seems appropriate.
 
 \newpage
 \textbf{Thanks} \\
