@@ -94,7 +94,7 @@ JT.theme <- theme(panel.border = element_rect(fill = NA, colour = "gray10"),
 
 \section{Why and when do we need a logistic regression?}
 
-Let us start with the situation where the response variable $Y$ can only have two (discrete) levels ''Yes" and ''No", or ''Dead" and ''Alive". Usually we asign the value ''1" to one outcome and ''0" to the other. Strictly speaking these should not be viewed as actual numbers. The qualitative response (''Dead" vs ''Alive") are coded in an \emph{indicator variable} $y$, which can only have the values ''0" and ''1". We start with only one controllable factor $x$. Let us say that for small values of $x$ the response is ''0", for large values of $x$ the response is ''1". This general description can still give rise to very different situations. It all depends on the region in between: we can go from a situation with a very clear distinction, a fuzzy middle or a fuzzy all round (Figure~\ref{fig:distinct}).
+Let us start with the situation where the response variable $Y$ can only have two (discrete) levels ''Yes" and ''No", or ''Dead" and ''Alive". Usually we asign the value ''1" to one outcome and ''0" to the other. Strictly speaking these should not be viewed as actual numbers. The qualitative response (''Dead" vs ''Alive") are coded in an \emph{indicator variable} $y$, which can only have the values ''0" and ''1". We start with only one controllable factor $x$. Let us say that for small values of $x$ the response is ''0", for large values of $x$ the response is ''1". This general description can still give rise to very different situations. It all depends on the region in between: we can go from a situation with a very clear distinction, a fuzzy middle or fuzzy all round (Figure~\ref{fig:distinct}).
 
 <<label=distinction,fig=TRUE,include=FALSE, echo=FALSE>>=
 df_clear <- data.frame(x=seq(-10,10,0.5),y=0)
@@ -129,7 +129,7 @@ grid.arrange(p1, p2, p3, ncol=3)
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{figure}
 
-It is important to remember that the results of one experiment represent only one sample of all possible experimental results. When we have multiple experiments we get different results each time (Figure~\ref{fig:intro}-left): the response variable $y_{i}$ is a probability variable $Y_{i}$. For small and large values of $x$ the results will practicaly always be ''zero" (small values) or ''one" (large values). However, in the intermediate zone, sometimes $Y_{i}=0$ and sometimes $Y_{i}=1$. By taking the average of all results we get the black dots in Figure~\ref{fig:intro}-right. When we put a smoothing line through these averages we get the S-shaped blue line.
+It is important to remember that the results of one experiment represent only one sample of all possible experimental results. When we have multiple experiments\sidenote{replicated experiments} we get different results each time (Figure~\ref{fig:intro}-left): the response variable $y_{i}$ is a probability variable $Y_{i}$. For small and large values of $x$ the results will practicaly always be ''zero" (small values) or ''one" (large values). However, in the intermediate zone, sometimes $Y_{i}=0$ and sometimes $Y_{i}=1$. By taking the average of all results we get the black dots in Figure~\ref{fig:intro}-right. When we put a smoothing line through these averages we get the S-shaped blue line.
 
 <<label=intro,fig=TRUE,include=FALSE, echo=FALSE>>=
 N <- 10
@@ -229,12 +229,12 @@ However there are some profound problems with this linear regression model.
 
 The response function is given by:
 \begin{equation}
-E(Y_{i}) = \beta_{0} + \beta_{1}x_{i}
+E(Y_{i}) = \beta_{0} + \beta_{1}x_{i} =\pi_{i}
 \label{eq:meanlin}
 \end{equation}
 
 But we know that all values of $E(Y_{i})$ should be ''0" or ''1" or in between those numbers. This is not always the case when $\beta_{0}$ and $\beta_{1}$ are determined using the least squares method. In Figure~\ref{fig:linresp} we had to cap the function, otherwise it could have had negative values or values above 1.
-
+\newpage
 \newthought{Problem 2: the error term $\epsilon_{i}$ is not normally distributed}
 
 The error can only have two values:
@@ -260,11 +260,11 @@ The variance of the response variable is:
 \begin{split}
 var(Y_{i}) & \overset{\Delta}{=} E\left[ (Y_{i} - E\left( Y_{i} \right))^{2}  \right] \\
 & = (1-\pi_{i})^{2}\pi_{i}+(0-\pi_{i})^{2}(1-\pi_{i})=(1-\pi_{i})\left[ (1-\pi_{i})\pi_{i} + \pi_{i}^{2} \right] \\
-& = (1-\pi_{i})\pi_{i}=(1-E(Y_{i}))E(Y_{i})
+& = (1-\pi_{i})\pi_{i}=\left[ 1-E(Y_{i}) \right] E(Y_{i})
 \end{split}
 \end{equation}
 
-The variance of the response variable $Y_{i}$ (and thus of the error $\epsilon_{i}$) depends on the mean of $Y_{i}$ which changes in function of $x_{i}$. Consequently it is not a constant. 
+The variance of the response variable $Y_{i}$ (and thus of the error $\epsilon_{i}$) depends on $E(Y_{i})$, the mean of $Y_{i}$, which changes in function of $x_{i}$. Consequently it is not a constant. 
 
 \newthought{Conclusion}
 The three problems cited above make it clear that in general, the basic conditions for a linear regression are \emph{not} met when the response variable is dichotomous.
@@ -273,7 +273,7 @@ The three problems cited above make it clear that in general, the basic conditio
 \section{''Sigmoid" functions}
 
 \subsection{The Probit Mean Response function}
-The response variable $y$ can only take the values ''0" and ''1". Or we should say the \emph{codes} ''0" and ''1". This coding is often based on another, continuous, variable $y'$. For example: the diameter of a aluminium rod can be influenced by the temperature ($x$) at which it is extruded. If the temperature is too low, the diameter will be too large. The rod is qualified as ''OK=1" when its diameter ($y'$) is below 25mm (Figure~\ref{fig:extrude}. \sidenote{The coding could of course be inverse when values above cut off get $y=0$, values below cut off get $y=1$}. 
+The response variable $y$ can only take the values ''0" and ''1". Or we should say the \emph{codes} ''0" and ''1". This coding is often based on another, continuous, variable $y'$. For example: the diameter of a aluminium rod can be influenced by the temperature ($x$) at which it is extruded. If the temperature is too low, the diameter will be too large. The rod is qualified as ''OK=1" when its diameter ($y'$) is below 25mm (Figure~\ref{fig:extrude})\sidenote{The coding could of course be inverse when values above cut off get $y=0$, values below cut off get $y=1$}. 
 
 <<label=extrude,fig=TRUE,include=FALSE, echo=FALSE>>=
 extrude <- data.frame(x=seq(325, 525, by=25), y=seq(29, 21, by=-1))
@@ -320,7 +320,7 @@ When we call this cut off value for $y'$, $y'_{co}$ and we assume that there is 
     P[Y_{i}=1]=\pi_{i}&=P[Y'_{i}< y'_{co}] \\
     &=P[\beta'_0 + \beta'_{1}X_{i}+\epsilon'_{i} < y'_{co}] \\
     &=P[\epsilon'_{i} < y'_{co} - \beta'_{0} -\beta'_{1}X_{i}] \\
-    &=P[\frac{\epsilon'_{i} -0}{\sigma'} < \frac{y'_{co} - \beta'_{0}}{\sigma'} - \frac{\beta'_{1}}{\sigma'}X_{i} \quad with \quad \epsilon'_{i} \sim \mathcal{N} (0,\sigma') \\
+    &=P[\frac{\epsilon'_{i} -0}{\sigma'} < \frac{y'_{co} - \beta'_{0}}{\sigma'} - \frac{\beta'_{1}}{\sigma'}X_{i}] \quad with \quad \epsilon'_{i} \sim \mathcal{N} (0,\sigma') \\
     &=P[Z < (\beta_{0}^{*}+\beta_{1}^{*}X_{i})]
   \end{split}
 \end{equation}
@@ -433,7 +433,7 @@ We can see that
 \begin{split}
 \lim_{x\to -\infty} \frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}} &= 0 \\
 \lim_{x\to \infty} \frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}} &= 1 \\
-\frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}}(x=0) &= \frac{1}{1+e^{-\beta_{0}}}
+\frac{1}{1+e^{-(\beta_{0} + \beta_{1}x_{i})}}(x_{i}=0) &= \frac{1}{1+e^{-\beta_{0}}}
 \end{split}
 \end{equation}
 
@@ -488,7 +488,7 @@ grid.arrange(p1, p2, p3, ncol=3)
 
 \subsection{Finding the coefficients $\beta_{0}$ and $\beta_{1}$}
 
-In linear regression, because we start from one set $(x_{i}, y_{i})$ of experimental results, we cannot find the ''true" values of $\beta_{0}$ and $\beta_{1}$: we will find $b_{0}$ and $b_{1}$, one of many possible solutions. The same is true in logistical regression: based on the data of one experiment we will not find $\beta_{0}$ and $\beta_{1}$ but $b_{0}$ and $b_{1}$.
+In linear regression we start from one set $(x_{i}, y_{i})$ of experimental results and therefore we cannot find the ''true" values of $\beta_{0}$ and $\beta_{1}$: we will find $b_{0}$ and $b_{1}$, one of many possible solutions. The same is true in logistical regression: based on the data of one experiment we will not find $\beta_{0}$ and $\beta_{1}$ but $b_{0}$ and $b_{1}$.\sidenote{Even replicated experiments will always be just a selection of all possible experiments}
 
 In linear regression we find $b_{0}$ and $b_{1}$ using the Ordinary Least Squares method: we \emph{minimise} the error which is the sum of the squares of the residuals:
 \begin{equation}
@@ -510,7 +510,7 @@ because:
   \end{split}
 \end{equation}
 
-If we assume\sidenote{Hypothesis 2: the observations are statistically independent} that the observations are independent, then the total probability for all observations is equal to the product of all the probabilities:
+If we assume\sidenote{Hypothesis 2: the observations are statistically independent} that the observations are independent, then the total probability for all observations is equal to the product of all the probabilities. We call this probability the \emph{Likelihood function}:
 \begin{equation}
   \mathcal{L}=\prod_{i=1}^{i=n}\left[ \pi_{i}  \right]^{Y_{i}}\left[ 1 - \pi_{i}  \right]^{(1 - Y_{i})}
 \end{equation}
@@ -525,19 +525,19 @@ For a specific set of $n$ observations $(x_{i},y_{i}), i=1 \ldots n$ this wil be
 \end{equation}
 Because all probabilities lie between $0$ and $1$, it follows that the product of these probabilities will also have a result between these two limits: the \emph{Likelihood} function will have values between 0 and 1.
 
-By taking the logarithm of $\mathcal{L}$ we obtain the \emph{log-likelihood function} $\ell$. Here we can work with sums instead of products, which is numerically advantageous:
+By taking the logarithm of $\mathcal{L}$ we obtain the \emph{Log-Likelihood function} $\ell$. Here we can work with sums instead of products, which is numerically advantageous:
 \begin{equation}
   \begin{split}
     \ell &= ln(\mathcal{L}) \\
-        &=\sum_{i=1}^{i=n}\left[ ln \left( e^{y_{i}(b_0 + b_{1}x_{i})} \right) - ln \left( 1 + e^{y_{i}(b_0 + b_{1}x_{i})} \right) \right] \\
-        &=\sum_{i=1}^{i=n}\left[  y_{i}(b_0 + b_{1}x_{i})   - ln \left( 1 + e^{y_{i}(b_0 + b_{1}x_{i})} \right) \right] \\
+        &=\sum_{i=1}^{i=n}\left[ ln \left( e^{y_{i}(b_0 + b_{1}x_{i})} \right) - ln \left( 1 + e^{(b_0 + b_{1}x_{i})} \right) \right] \\
+        &=\sum_{i=1}^{i=n}\left[  y_{i}(b_0 + b_{1}x_{i})   - ln \left( 1 + e^{(b_0 + b_{1}x_{i})} \right) \right] \\
   \end{split}
   \label{eq:loglikelihoodlogit}
 \end{equation}
 
 The \emph{Log-Likelihood} function will have values between $-\infty$ and $0$.
 
-In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical techniques such as the \emph{Newton-Raphson method}. Essentially it involves a iterative process in which a set of equtions based on the \emph{Hessian matrix} and the \emph{gradient vector} of the \emph{Log Likelihood function}\sidenote{See: "Finding the maximum of the (log) likelihood function with the Newton-Raphson method"}. In R this is done by the \textit{glm(family=binomial(link="logit"))} function (General Linear Model), where we specify that we assume the process to be ''binomial", and the link function to be ''logit".
+In logistical regression the criterium is to find the \emph{maximum} of the likelyhood function. No analytical solution is available and the maximum is found using numerical techniques such as the \emph{Newton-Raphson method}. Essentially it involves a iterative process in which a set of equtions based on the \emph{Hessian matrix} and the \emph{gradient vector} of the \emph{Log Likelihood function}\sidenote{See: "Finding the maximum of the (log) likelihood function with the Newton-Raphson method"}. In R this is done by the \textit{glm(family = binomial(link = "logit"))} function (General Linear Model), where we specify that we assume the process to be ''binomial", and the link function to be ''logit".
 
 \newthought{Example}
 
@@ -601,14 +601,23 @@ P[Y_{i}=1]=\pi(x_{i})=\frac{1}{1+e^{-(\beta_{0}+\beta_{1}x_{i})}}
 
 This is the alternative hypothesis $H_{a}$. The null-hypothesis $H_{0}$ assumes that the probability is independent of $x_{i}$ which is the same as saying that $\beta_{1}=0$.
 
-The \emph{Log Likelihood} function under the null-hypothesis is:
+The \emph{Log-Likelihood} function under the null-hypothesis is:
 \begin{equation}
 \ell(H_{0}) = \sum_{i=1}^{i=n} \left[y_{i}b_{0} - ln(1+e^{b_{0}} \right]=\sum_{i=1}^{i=n} y_{i}b_{0} - n.ln(1+e^{b_{0}})
 \end{equation}
 
 This is a function of $b_{0}$ and it will have a maximum value for $b_{0}=b_{0}^{*}$ when
 \begin{equation}
-\frac{d}{db_{0}} \ell(b_{0}^{*}|H_{0})=\sum_{i=1}^{i=n}y_{i}-n \frac{e^{b_{0}^{*}}}{1+e^{b_{0}^{*}}}=0
+\frac{d}{db_{0}} \ell(H_{0})(b_{0}^{*})=\sum_{i=1}^{i=n}y_{i}-n \frac{e^{b_{0}^{*}}}{1+e^{b_{0}^{*}}}=0
+\end{equation}
+
+Because
+\begin{equation}
+  \begin{split}
+  \frac{\sum_{i=1}^{i=n}y_{i}}{n} &= \frac{e^{b_{0}^{*}}}{1+e^{b_{0}^{*}}} \\
+  \hat{y} &= \frac{e^{b_{0}^{*}}}{1+e^{b_{0}^{*}}} \\
+  \hat{y} &= (1 - \hat{y})e^{b_{0}^{*}}
+  \end{split}
 \end{equation}
 
 from which follows that the maximum is reached for the value $b_{0}=b_{0}^{*}$
@@ -618,7 +627,7 @@ b_{0}^{*}=ln \frac{\bar{y}}{1-\bar{y}}
 
 The maximum of the \emph{Log Likelihood} function under the null-hypothesis, $\ell_{0}$, is then
 \begin{equation}
-\ell_{0}=ln(\frac{\bar{y}}{1-\bar{y}})n\bar{y} - n.ln(1 + ln(\frac{\bar{y}}{1-\bar{y}}))
+\ell_{0}=ln(\frac{\bar{y}}{1-\bar{y}})n\bar{y} - n.ln \left[ 1 + ln( \frac{\bar{y}}{1-\bar{y}}) \right]
 \end{equation}
 
 The maximum of the \emph{Log Likelihood} function under the alternative hypothesis, $\ell_{a}$, is found by calculating equation \ref{eq:loglikelihoodlogit} with the values $b_{0}=\hat{b}_{0}$ and $b_{1}=\hat{b}_{1}$ that were found numerically:
@@ -872,17 +881,9 @@ In this case the confusion matrix is given in Table~\ref{tab:co02}: only one Fal
 We can see this is a \emph{Receiver Operating Characteristic} (Figure~\ref{fig:ROC}).
 
 <<label=ROC,fig=TRUE,include=FALSE, echo=FALSE>>=
-co_influence <- data.frame(co=seq(0.1, 0.9, by=0.1), FP=0, TP=0)
-for (i in seq(1:nrow(co_influence))){
-co_influence$FP[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[1,2])/n
-co_influence$TP[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,2])/n
-}
-ggplot(data=co_influence) +
-  geom_line(aes(x=FP, y=TP)) +
-  geom_point(aes(x=FP, y=TP)) +
-  geom_text(aes(x=FP, y=TP, label=co), hjust=0.2, vjust=1) +
-  labs(title="Receiver Operating Characteristic", xlab="FP", ylab="TP") +
-  JT.theme
+library(verification)
+preds <- predict(mod.lr,type="response")
+roc.plot(data.df[,2], preds, thresholds = seq(0, max(preds), 0.01), main="Receiver Operating Characteristic", xlab="False Positive Rate", ylab="True Positive Rate")
 @
 
 \begin{marginfigure}[0cm]
@@ -892,25 +893,45 @@ ggplot(data=co_influence) +
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-A choice of the cut-off point equal to 0.2 seems appropriate.
+In this particular example we aim for a choice of the cut-off point that both maximises Q and minimises the False Negative Rate (FNR).
 
-<<echo=FALSE>>=
-co <- 0.2
-comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
-for (i in (1:nrow(comp.lr))) {
-  if(comp.lr$pred[i] == 1 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("FP")}
-  if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 1) {comp.lr$group.name[i]=as.character("FN")}
-  if(comp.lr$pred[i] == 0 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("TN")}
+<<label=QandFNR,fig=TRUE,include=FALSE, echo=FALSE>>=
+N <- 10
+QandFNR <- data.frame(co = seq (0, 1, length.out = N + 1), Q=rep(0, N+1), FNR=rep(0, N+1))
+for (i in seq(1, N+1)) {
+  comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>=co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
+    for (j in (1:nrow(comp.lr))) {
+      if(comp.lr$pred[j] == 1 & comp.lr$obs[j] == 0) {comp.lr$group.name[j]=as.character("FP")}
+      if(comp.lr$pred[j] == 0 & comp.lr$obs[j] == 1) {comp.lr$group.name[j]=as.character("FN")}
+      if(comp.lr$pred[j] == 0 & comp.lr$obs[j] == 0) {comp.lr$group.name[j]=as.character("TN")}
+    }
+  confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") >= QandFNR$co[i])
+if (QandFNR$co[i] != 0 & QandFNR$co[i] !=1) {
+  QandFNR$Q[i] <- round((confusion_matrix[1,1] + confusion_matrix[2,2])/n,3)
+  QandFNR$FNR[i] <- round((confusion_matrix[2,1])/n,3)
 }
-paste("number TP=",sum(comp.lr$group.name == "TP"))
-paste("number FP=",sum(comp.lr$group.name == "FP"))
-paste("number FN=",sum(comp.lr$group.name == "FN"))
-paste("number TN=",sum(comp.lr$group.name == "TN"))
-confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") > co)
-confusion_matrix
-Q <- round((confusion_matrix[1,2] + confusion_matrix[2,1])/n,3)
-Q
+if (QandFNR$co[i] == 0) {
+  QandFNR$Q[i] <- round(confusion_matrix[2,1]/n, 3)
+  QandFNR$FNR[i] <- 0
+  }
+if (QandFNR$co[i] == 1) {
+  QandFNR$Q[i] <- round(confusion_matrix[1,1]/n, 3)
+  QandFNR$FNR[i] <- round(confusion_matrix[2,1]/n, 3)
+  }
+}
+ggplot(data=QandFNR) +
+  geom_line(aes(x = co, y = Q ), color="Blue") +
+  geom_line(aes(x = co, y = FNR ), color="Red") +
+  labs(title="Influence of cut-off point on the Quality and the False Negative Rate", x="co", y="Q, FNR") +
+  JT.theme
 @
+
+\begin{marginfigure}[0cm]
+\includegraphics[width=1\textwidth]{LR-QandFNR}
+\caption{Influence of the cut-off point on quality and False Negative Rate}
+\label{fig:QandFNR}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{marginfigure}
 
 \newpage
 \textbf{Thanks} \\
