@@ -820,18 +820,18 @@ Observation$\downarrow$ & FALSE & TRUE & $\leftarrow$Prediction \\
 \label{tab:coR}
 \end{margintable}
 
-It is clear that the choice of the \emph{cut-off} point is of major influence. We can measure the effect of different values of the \emph{cut-off} point, by calculating the proportion of predictions, this is
+It is clear that the choice of the \emph{cut-off} point is of major influence. We can measure the effect of different values of the \emph{cut-off} point, by calculating the \emph{accuracy} which is the proportion of correct predictions.
 \begin{equation}
-Q = \frac{TP + TN}{n}
+accuracy = \frac{TP + TN}{n}
 \end{equation}
 
-We are trying to get $Q$ as high as possible.
+We are trying to get the \emph{accuracy} as high as possible.
 
-In view of the fact that the consequence of a failing o-ring could be (and in reality were) disastrous, we clearly do not want a model that leads to a False Negative: a classification where we predict ''Safe" (which in this case is coded as ''FALSE"), while the reality is that it ''Fails" (coded as a ''1"). 
+In view of the fact that the consequence of a failing o-ring could be (and in reality was) disastrous, we clearly do not want a model that leads to a False Negative: a classification where we predict ''Safe" (which in this case is coded as ''FALSE"), while the reality is that it ''Fails" (coded as a ''1"). 
 
 A False Positive means that the model classifies the situation as ''Fails" (coded as ''TRUE"), while the reality is ''Safe" (coded as ''0"). This is annoying (the launch is delayed until the temperature is higher) and it will cost money, but these consequences are incomparable with the loss of life. 
 
-So in this particular case we aim for a choice of the cut-off point that both maximises Q and minimises the False Negative Rate (FNR). Figure~\ref{fig:QandFNR} shows how Quality (Q) and the False Negative Rate (FNR) evolve for different values of the cut-off point.
+So in this particular case we aim for a choice of the cut-off point that both maximises Q and minimises the False Negative Rate (FNR). Figure~\ref{fig:QandFNR} shows how \emph{accuracy} and the False Negative Rate (FNR) evolve for different values of the cut-off point.
 
 <<label=QandFNR,fig=TRUE,include=FALSE, echo=FALSE>>=
 N <- 100
@@ -862,20 +862,20 @@ for (i in seq(1, N+1)) {
 ggplot(data=QandFNR) +
   geom_line(aes(x = co, y = Q ), color="Blue") +
   geom_line(aes(x = co, y = FNR ), color="Red") +
-  labs(title="Influence of cut-off point on the Quality (Blue)\nand the False Negative Rate (Red)", x="co", y="Q, FNR") +
+  labs(title="Influence of cut-off point on the Accuracy (Blue)\nand the False Negative Rate (Red)", x="co", y="Q, FNR") +
   JT.theme
 @
 
 \begin{marginfigure}[-8cm]
 \includegraphics[width=1\textwidth]{LR-QandFNR}
-\caption{Influence of the cut-off point on quality and False Negative Rate}
+\caption{Influence of the cut-off point on Accuracy and False Negative Rate}
 \label{fig:QandFNR}
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-Setting the cut-off point to 0 will put the False Negative Rate to zero, but it is not realistic because it effectively means that the prediction for all o-rings will be ''TRUE", which means that we will consider all o-rings to be defective, whatever the temperature! We would never launch a spacecraft. After checking them we will indeed find 7 o-rings (out of 23) to be defective (mostly at low temperatures) but also that there are 16 o-rings that are OK. The Q-factor would be 7/23=0.304.
+Setting the cut-off point to 0 will put the False Negative Rate to zero, but it is not realistic because it effectively means that the prediction for all o-rings will be ''TRUE", which means that we will consider all o-rings to be defective, whatever the temperature! We would never launch a spacecraft. After checking them we will indeed find 7 o-rings (out of 23) to be defective (mostly at low temperatures) but also that there are 16 o-rings that are OK. The \emph{accuracy} would be 7/23=0.304.
 
-Setting the cut-off point at 0.5 will give high quality and low FNR. However: what is an exceptable FNR in this specific case?
+Setting the cut-off point at 0.5 will give high \emph{accuracy} and low FNR. However: what is an exceptable FNR in this specific case?
 <<echo=FALSE>>=
 co <- 0.5
 comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
@@ -901,17 +901,21 @@ FALSE & FN=$\Sexpr{FN}$ & TN=$\Sexpr{TN}$ &
 \label{tab:co02}
 \end{margintable}
 
-In this case the confusion matrix is given in Table~\ref{tab:co02}: \Sexpr{FN} False Negative and a quality of our classification model: $Q=\Sexpr{round(Q,3)}$.
+In this case the confusion matrix is given in Table~\ref{tab:co02}: \Sexpr{FN} False Negative and a quality of our classification model: $Accuracy=\Sexpr{round(Q,3)}$.
 
 \newpage
-We can see look at the \emph{Receiver Operating Characteristic} (Figure~\ref{fig:ROC}). This gives the True Positive Rate as a function of the False Positive Rate for different values of the cut-off point.
+We can see look at the \emph{Receiver Operating Characteristic} (Figure~\ref{fig:ROC}). The ROC is a graph of the \emph{Sensitivity=True Positive Ratio=TPR} as a function of the \emph{Aspecificity=False Positive Ratio =FPR} for different values of the cut-off point. 
+
+A perfect classifier would have a TPR=1 and a FPR=0. That is the point (0,1) in the graph.
+If our model would simply guess for each temperature whether an o-ring is defective (p=0.5) we would roughly be right 50\% of the time (TPR=0.5) and wrong also 50\% of the time (FPR=0.5). As the sample size increases we would get closer and closer to this point. This is the point halfway on the diagonal.
+Classifier models with different cut-off points will result into one ''model"-point in the graph. All point above the diagonal have a TPR>FPR which is good. Points below the diagonal represent classifier models with TPR<FPR. In those cases it is necessary to look at our choice of what we call ''good" and what we cal ''bad". The ROC-curve gives us the coordinates of the classifier model for different values of the cut-off point (Figure~\ref{fig:ROC}). All point lie above the diagonal, which is good. But most are far away from the ideal classifier.
 
 <<label=ROC,fig=TRUE,include=FALSE, echo=FALSE>>=
 preds <- predict(mod.lr,type="response")
 roc.plot(data.df[,2], preds, thresholds = seq(0, max(preds), 0.01), main="Receiver Operating Characteristic", xlab="False Positive Rate", ylab="True Positive Rate")
 @
 
-\begin{marginfigure}[0cm]
+\begin{marginfigure}[-5cm]
 \includegraphics[width=1\textwidth]{LR-ROC}
 \caption{Influence of the cut-off point on the proportion of incorrect predictions}
 \label{fig:ROC}
