@@ -64,6 +64,7 @@ library(gridExtra)
 library(broom)
 library(mcsm)
 library(scatterplot3d)
+library(verification)
 @
 
 % Setting the ggplot theme:
@@ -632,15 +633,15 @@ The maximum of the \emph{Log Likelihood} function under the null-hypothesis, $\e
 
 The maximum of the \emph{Log Likelihood} function under the alternative hypothesis, $\ell_{a}$, is found by calculating equation \ref{eq:loglikelihoodlogit} with the values $b_{0}=\hat{b}_{0}$ and $b_{1}=\hat{b}_{1}$ that were found numerically:
 \begin{equation}
-    \ell_{a} =\sum_{i=1}^{i=n}\left[  y_{i}(\hat{b}_0 + \hat{b}_{1}x_{i})   - ln \left( 1 + e^{y_{i}(\hat{b}_0 + \hat{b}_{1}x_{i})} \right) \right]
+    \ell_{a} =\sum_{i=1}^{i=n}\left[  y_{i}(\hat{b}_0 + \hat{b}_{1}x_{i})   - ln \left( 1 + e^{(\hat{b}_0 + \hat{b}_{1}x_{i})} \right) \right]
 \end{equation}
 
-In an ideal case, the value of the \emph{Log Likelihood} function is 0 and the value of the \emph{Likelihood} function is 1. \emph{deviance} is a measure of the deviation of a model from the ideal and is defined as:
+In an ideal case, the value of the \emph{Log Likelihood} function is 0 and the value of the \emph{Likelihood} function is 1. \emph{Deviance} is a measure of the deviation of the model from the ideal and is defined as:
 \begin{equation}
 D=-2\ell=-2ln \mathcal{L}=ln (\frac{1}{\mathcal{L}^{2})}
 \end{equation}
 
-In the ideal case the \emph{deviance} is zero, for $\mathcal{L}=0.5$ it will be 1.386, for $\mathcal{L}=0.1$ it is 4.605 etc. 
+In the ideal case ($\mathcal{L}=1$) the \emph{deviance} is zero, for $\mathcal{L}=0.5$ it will be 1.386, for $\mathcal{L}=0.1$ it is 4.605 etc. 
 
 The \emph{deviances} under the null-hypothesis and under the alternative hypothesis are:
 \begin{equation}
@@ -669,7 +670,6 @@ With this distribution we can calculate the probability of finding the observed 
 p=P[\chi^{2}_{1} \geq D_{0}-D_{a}]=1-pchisq(D_{a}-D_{0},df_{0}-df_{a})
 \end{equation}
 
-\newpage
 \newthought{Example}
 
 Calculating the p-value of the Likelihood Ration Test:
@@ -697,7 +697,7 @@ All this information can be found in the details of the glm-model:
 <<>>=
 broom::glance(mod.lr)
 @
-
+\medskip
 \begin{itemize}
   \item null.deviance=$D_{0}$
   \item deviance=$D_{a}$
@@ -706,23 +706,31 @@ broom::glance(mod.lr)
   \item logLik=$l_{a}$ the value of the \emph{Log Likelihood} function of the full model (alternative hypothesis $H_{a}$)
   \item AIC: the Akaike Information Criterion. It is comparable with the adjusted determination coefficient $R_{adj}^{2}$ of the linear regression model. It is helpfull when there are many independent variables because it penalises the increased use of more explanatory variables in the model. The formula is:
   \begin{equation}
-  AIC=-2ln\mathcal{L_{a}} + 2k=D_{a}+2k
+  AIC=-2ln\mathcal{L}_{a} + 2k=D_{a}+2k
   \end{equation}
   where $k=$number of estimated parameters in the model (in this example $k=2$)
-  \item BIC: Bayesian Information Criterion: an alternative to the AIC, not included in the standard output of the \textit{glm}-function
-  \begin{equation}
-  BIC=-2ln\mathcal{L_{a}} + k.ln(n)=D_{a}+k.ln(n)
-  \end{equation}
 \end{itemize}
 
 <<>>=
 k <- 2
 AIC <- Da + 2*k
 AIC
+@
+
+\begin{itemize}
+  \item BIC: Bayesian Information Criterion: an alternative to the AIC.
+  \begin{equation}
+  BIC=-2ln\mathcal{L}_{a} + k.ln(n)=D_{a}+k.ln(n)
+  \end{equation}
+\end{itemize}
+
+<<>>=
 BIC <- Da + k*log(n)
 BIC
 @
 
+
+\medskip
 The p-value that we calculated $p=\Sexpr{round(p,4)}$ gives an appreciation of the quality of the \textbf{total} model.
 
 We can also find it by an \textit{anova}-analysis using the option ''LRT:Likelihood Ratio Test":
@@ -739,7 +747,7 @@ library(aod)
 wald.test(b=coef(mod.lr),Sigma=vcov(mod.lr),Terms=1)
 wald.test(b=coef(mod.lr),Sigma=vcov(mod.lr),Terms=2)
 @
-
+\medskip
 These are the values that we also find for $\beta_{0}$ and $\beta_{1}$ in the summary of the \textit{glm}-function:
 <<>>=
 tidy(mod.lr)
@@ -796,12 +804,21 @@ FALSE & FN=$\Sexpr{FN}$ & TN=$\Sexpr{TN}$ &
 \label{tab:co05}
 \end{margintable}
 
-\newpage
 In R we can create this table with the function \textit{table} but the quadrants are differently alligned:
 <<>>=
 confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") > co)
 confusion_matrix
 @
+
+\begin{margintable}
+\begin{tabular}{r c c l}
+Observation$\downarrow$ & FALSE & TRUE & $\leftarrow$Prediction \\
+0 & TN & FP &\\
+1 & FN & TP &
+\end{tabular}
+\caption{Confusion matrix: configuration in R}
+\label{tab:coR}
+\end{margintable}
 
 It is clear that the choice of the \emph{cut-off} point is of major influence. We can measure the effect of different values of the \emph{cut-off} point, by calculating the proportion of predictions, this is
 \begin{equation}
@@ -810,48 +827,57 @@ Q = \frac{TP + TN}{n}
 
 We are trying to get $Q$ as high as possible.
 
-Figure~\ref{fig:coinfluence} shows what happens to $Q$ when we choose different values for the cut-off point.
+In view of the fact that the consequence of a failing o-ring could be (and in reality were) disastrous, we clearly do not want a model that leads to a False Negative: a classification where we predict ''Safe" (which in this case is coded as ''FALSE"), while the reality is that it ''Fails" (coded as a ''1"). 
 
-<<label=coinfluence,fig=TRUE,include=FALSE, echo=FALSE>>=
-co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), Q=0)
-for (i in seq(1:100)){
-co_influence$Q[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[1,1] + table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,2])/n 
+A False Positive means that the model classifies the situation as ''Fails" (coded as ''TRUE"), while the reality is ''Safe" (coded as ''0"). This is annoying (the launch is delayed until the temperature is higher) and it will cost money, but these consequences are incomparable with the loss of life. 
+
+So in this particular case we aim for a choice of the cut-off point that both maximises Q and minimises the False Negative Rate (FNR). Figure~\ref{fig:QandFNR} shows how Quality (Q) and the False Negative Rate (FNR) evolve for different values of the cut-off point.
+
+<<label=QandFNR,fig=TRUE,include=FALSE, echo=FALSE>>=
+N <- 100
+QandFNR <- data.frame(co = seq (0, 1, length.out = N + 1), Q=rep(0, N+1), FNR=rep(0, N+1))
+for (i in seq(1, N+1)) {
+  comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>=co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
+    for (j in (1:nrow(comp.lr))) {
+      if(comp.lr$pred[j] == 1 & comp.lr$obs[j] == 0) {comp.lr$group.name[j]=as.character("FP")}
+      if(comp.lr$pred[j] == 0 & comp.lr$obs[j] == 1) {comp.lr$group.name[j]=as.character("FN")}
+      if(comp.lr$pred[j] == 0 & comp.lr$obs[j] == 0) {comp.lr$group.name[j]=as.character("TN")}
+    }
+  confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") >= QandFNR$co[i])
+  if (dim(confusion_matrix)[2]==2) {
+    QandFNR$Q[i] <- round((confusion_matrix[1,1] + confusion_matrix[2,2])/n,3)
+    QandFNR$FNR[i] <- round((confusion_matrix[2,1])/n,3)
+  }
+  if (dim(confusion_matrix)[2]==1) {
+    if(colnames(confusion_matrix)=="TRUE") {
+      QandFNR$Q[i] <- round(confusion_matrix[2,1]/n, 3)
+      QandFNR$FNR[i] <- 0
+    }
+    if(colnames(confusion_matrix)=="FALSE") {
+      QandFNR$Q[i] <- round(confusion_matrix[1,1]/n, 3)
+      QandFNR$FNR[i] <- round(confusion_matrix[2,1]/n, 3)
+    }
+  }
 }
-ggplot(data=co_influence) +
-  geom_line(aes(x=co, y=Q)) +
-  labs(title="Influence of cut-off point on the\nproportion of correct predictions", x="co", y="Q") +
+ggplot(data=QandFNR) +
+  geom_line(aes(x = co, y = Q ), color="Blue") +
+  geom_line(aes(x = co, y = FNR ), color="Red") +
+  labs(title="Influence of cut-off point on the Quality (Blue)\nand the False Negative Rate (Red)", x="co", y="Q, FNR") +
   JT.theme
 @
 
-\begin{marginfigure}[0cm]
-\includegraphics[width=1\textwidth]{LR-coinfluence}
-\caption{Influence of the cut-off point on the proportion of correct predictions}
-\label{fig:coinfluence}
+\begin{marginfigure}[-8cm]
+\includegraphics[width=1\textwidth]{LR-QandFNR}
+\caption{Influence of the cut-off point on quality and False Negative Rate}
+\label{fig:QandFNR}
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-It seems that a cut-off value around 0.5 does indeed give the highest proportion of correct predictions. However, in view of the fact that the consequence of a failing o-ring could be (and in reality were) disastrous, we clearly do not want a model that leads to a classification where we predict ''Safe" (which in this case is coded as ''0"), while the reality is that it ''Fails" (coded as a ''1"). We do not want a False Negative. A False Positive means that the model classifies the situation as ''Fails" (coded as ''1"), while the reality is ''Safe" (coded as ''0"). This is annoying (the launch is delayed until the temperature is higher) and it will cost money, but these consequences are incomparable with the loss of life. We should therefore choose $co$ to minimize the False Negatives, even at the cost of higher False Positives. 
+Setting the cut-off point to 0 will put the False Negative Rate to zero, but it is not realistic because it effectively means that the prediction for all o-rings will be ''TRUE", which means that we will consider all o-rings to be defective, whatever the temperature! We would never launch a spacecraft. After checking them we will indeed find 7 o-rings (out of 23) to be defective (mostly at low temperatures) but also that there are 16 o-rings that are OK. The Q-factor would be 7/23=0.304.
 
-<<label=coinfluenceFN,fig=TRUE,include=FALSE, echo=FALSE>>=
-co_influence <- data.frame(co=seq(0.1, 0.9, length.out = 100), FN=0)
-for (i in seq(1:100)){
-co_influence$FN[i] <- (table(data.df[,2],predict(mod.lr, type="response")>co_influence$co[i])[2,1])/n 
-}
-ggplot(data=co_influence) +
-  geom_line(aes(x=co, y=FN)) +
-  labs(title="Influence of cut-off point on the\nproportion of False Negatives", x="co", y="FN") +
-  JT.theme
-@
-\begin{marginfigure}[0cm]
-\includegraphics[width=1\textwidth]{LR-coinfluenceFN}
-\caption{Influence of the cut-off point on the proportion of False Negatives}
-\label{fig:coinfluenceFN}
-\setfloatalignment{b}% forces caption to be bottom-aligned
-\end{marginfigure}
-
-Low values of the cut-off point (e.g. $co=0.2$) seem to be more appropriate in view of the catastrophical consequences of a False Negative. 
+Setting the cut-off point at 0.5 will give high quality and low FNR. However: what is an exceptable FNR in this specific case?
 <<echo=FALSE>>=
-co <- 0.2
+co <- 0.5
 comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
 for (i in (1:nrow(comp.lr))) {
   if(comp.lr$pred[i] == 1 & comp.lr$obs[i] == 0) {comp.lr$group.name[i]=as.character("FP")}
@@ -871,17 +897,16 @@ Prediction$\downarrow$ & 1 & 0 & $\leftarrow$Observation \\
 TRUE & TP=$\Sexpr{TP}$ & FP=$\Sexpr{FP}$ &\\
 FALSE & FN=$\Sexpr{FN}$ & TN=$\Sexpr{TN}$ &
 \end{tabular}
-\caption{Confusion matrix; cut-off=0.2}
+\caption{Confusion matrix; cut-off=0.5}
 \label{tab:co02}
 \end{margintable}
 
-In this case the confusion matrix is given in Table~\ref{tab:co02}: only one False Negative but with a lower quality of our classification: $Q=\Sexpr{round(Q,3)}$.
+In this case the confusion matrix is given in Table~\ref{tab:co02}: \Sexpr{FN} False Negative and a quality of our classification model: $Q=\Sexpr{round(Q,3)}$.
 
 \newpage
-We can see this is a \emph{Receiver Operating Characteristic} (Figure~\ref{fig:ROC}).
+We can see look at the \emph{Receiver Operating Characteristic} (Figure~\ref{fig:ROC}). This gives the True Positive Rate as a function of the False Positive Rate for different values of the cut-off point.
 
 <<label=ROC,fig=TRUE,include=FALSE, echo=FALSE>>=
-library(verification)
 preds <- predict(mod.lr,type="response")
 roc.plot(data.df[,2], preds, thresholds = seq(0, max(preds), 0.01), main="Receiver Operating Characteristic", xlab="False Positive Rate", ylab="True Positive Rate")
 @
@@ -893,45 +918,7 @@ roc.plot(data.df[,2], preds, thresholds = seq(0, max(preds), 0.01), main="Receiv
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
-In this particular example we aim for a choice of the cut-off point that both maximises Q and minimises the False Negative Rate (FNR).
 
-<<label=QandFNR,fig=TRUE,include=FALSE, echo=FALSE>>=
-N <- 10
-QandFNR <- data.frame(co = seq (0, 1, length.out = N + 1), Q=rep(0, N+1), FNR=rep(0, N+1))
-for (i in seq(1, N+1)) {
-  comp.lr <- data.frame(pred=as.numeric(predict(mod.lr, type="response")>=co), obs=data.df[,2], group.name=("TP"), stringsAsFactors=FALSE)
-    for (j in (1:nrow(comp.lr))) {
-      if(comp.lr$pred[j] == 1 & comp.lr$obs[j] == 0) {comp.lr$group.name[j]=as.character("FP")}
-      if(comp.lr$pred[j] == 0 & comp.lr$obs[j] == 1) {comp.lr$group.name[j]=as.character("FN")}
-      if(comp.lr$pred[j] == 0 & comp.lr$obs[j] == 0) {comp.lr$group.name[j]=as.character("TN")}
-    }
-  confusion_matrix <- table(data.df[,2],predict(mod.lr, type="response") >= QandFNR$co[i])
-if (QandFNR$co[i] != 0 & QandFNR$co[i] !=1) {
-  QandFNR$Q[i] <- round((confusion_matrix[1,1] + confusion_matrix[2,2])/n,3)
-  QandFNR$FNR[i] <- round((confusion_matrix[2,1])/n,3)
-}
-if (QandFNR$co[i] == 0) {
-  QandFNR$Q[i] <- round(confusion_matrix[2,1]/n, 3)
-  QandFNR$FNR[i] <- 0
-  }
-if (QandFNR$co[i] == 1) {
-  QandFNR$Q[i] <- round(confusion_matrix[1,1]/n, 3)
-  QandFNR$FNR[i] <- round(confusion_matrix[2,1]/n, 3)
-  }
-}
-ggplot(data=QandFNR) +
-  geom_line(aes(x = co, y = Q ), color="Blue") +
-  geom_line(aes(x = co, y = FNR ), color="Red") +
-  labs(title="Influence of cut-off point on the Quality and the False Negative Rate", x="co", y="Q, FNR") +
-  JT.theme
-@
-
-\begin{marginfigure}[0cm]
-\includegraphics[width=1\textwidth]{LR-QandFNR}
-\caption{Influence of the cut-off point on quality and False Negative Rate}
-\label{fig:QandFNR}
-\setfloatalignment{b}% forces caption to be bottom-aligned
-\end{marginfigure}
 
 \newpage
 \textbf{Thanks} \\
