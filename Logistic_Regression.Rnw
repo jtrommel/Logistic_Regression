@@ -1070,22 +1070,52 @@ AUC
 @
 
 It is clear that ''c" is better than ''b" is better than ''a", but also that ''d" is worse than ''b" but better than ''a".
-\newpage
+
+\subsection{Optimal cut-off point}
+The optimal cut-off point will be the one that results in the point on the ROC-curve that is closest to the ''perfect"-classifier, which is the point (0,1). The distance is equal to $\sqrt{FPR^{2}+(1-TPR)^2}$. Finding the minimum of this value will get you the optimal cut-off point.
+
 \subsection{ROC-curve for the Challenger example}
 The classifier will lead to different confusion matrices for different choices of the cut-off points. Every choice will have a TPR and an FPR and thus a ''model"-point in the graph. A \emph{low} cut-off point will lead to a lot of ''TRUE"-predictions, which is equivalent to a blind classifier with a high p-value and so we expect to find the coordinates of models with a \emph{low} cut-off point in the top right hand corner of the graph. Models with a \emph{high} cut-off point should fall into the lower left corner of the graph. The ROC-curve of our logistical regression model for different values of the cut-off point is given in Figure~\ref{fig:ROC4}. All points lie above the diagonal, which is good. But most are far away from the ideal classifier.
 
 <<label=ROC4,fig=TRUE,include=FALSE, echo=FALSE>>=
-preds <- predict(mod.lr,type="response")
-roc.plot(data.df[,2], preds, thresholds = seq(0, max(preds), 0.01), main="Receiver Operating Characteristic", xlab="False Positive Rate", ylab="True Positive Rate")
+ROC_curve <- data.frame(co=seq(0,1, length.out=11), FPR=c(1, rep(0,10)), TPR=c(1, rep(0,10)), dist=c(1, rep(0,10)))
+ROC_curve$co.label <- as.character(ROC_curve$co)
+preds <- predict(mod.lr, type="response")
+for (i in c(2:10)) {
+  comp.lr <- data.frame(pred=as.numeric(preds>ROC_curve$co[i]), obs=data.df[,2])
+  ROC_curve$TPR[i] <- sum(comp.lr$pred==1 & comp.lr$obs==1)/sum(comp.lr$obs==1)
+  ROC_curve$FPR[i] <- sum(comp.lr$pred==1 & comp.lr$obs==0)/sum(comp.lr$obs==0)
+  ROC_curve$dist[i] <- sqrt(ROC_curve$FPR[i]^2 + (1-ROC_curve$TPR[i])^2)
+}
+ROC_curve$dist[11] <- 1
+ROC_curve <- ROC_curve[order(-FPR),]
+ggplot(data=ROC_curve, aes(FPR, TPR, label=co.label)) +
+  geom_line(color="Red") +
+  geom_point(color="Black") +
+  geom_text(hjust="left", nudge_x = 0.01, nudge_y=0.02, check_overlap = TRUE, size=3) +
+  geom_abline(intercept=0, slope=1, color="Black", linetype=2)+
+  scale_x_continuous(limits=c(0,1.05)) +
+  scale_y_continuous(limits=c(0,1.05)) +
+  labs(title="ROC-curve for logistic regression model", x="FPR", y="TPR") +
+  JT.theme
+AUC_lr <- 0
+for (i in c(2:11)) {
+  AUC_lr <- AUC_lr + (1/2)*(ROC_curve$FPR[i]-ROC_curve$FPR[i-1])*(ROC_curve$TPR[i] - ROC_curve$TPR[i-1]) + (ROC_curve$FPR[i]-ROC_curve$FPR[i-1])*ROC_curve$TPR[i-1]
+}
 @
 
-\begin{marginfigure}[0cm]
+\begin{marginfigure}[-3cm]
 \includegraphics[width=1\textwidth]{LR-ROC4}
-\caption{ROC of the linear regression model}
+\caption{ROC of the logistic regression model}
 \label{fig:ROC4}
 \setfloatalignment{b}% forces caption to be bottom-aligned
 \end{marginfigure}
 
+The Area Under Curve (AUC) is equal to $\Sexpr{round(AUC_lr,3)}$. The optimal cut-off point, which gives the point on the ROC-curve closest to point (0,1) is given by:
+
+<<>>=
+ROC_curve %>% filter(dist==min(dist))
+@
 
 
 \newpage
