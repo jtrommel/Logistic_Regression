@@ -1117,6 +1117,7 @@ The Area Under Curve (AUC) is equal to $\Sexpr{round(AUC_lr,3)}$. The optimal cu
 ROC_curve %>% filter(dist==min(dist))
 @
 
+a
 
 \newpage
 \textbf{Thanks} \\
