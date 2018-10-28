@@ -65,6 +65,7 @@ library(broom)
 library(mcsm)
 library(scatterplot3d)
 library(verification)
+library(ROCR)
 @
 
 % Setting the ggplot theme:
@@ -1117,7 +1118,23 @@ The Area Under Curve (AUC) is equal to $\Sexpr{round(AUC_lr,3)}$. The optimal cu
 ROC_curve %>% filter(dist==min(dist))
 @
 
-a
+The package \textbf{ROCR} has a number of usefull functions with regard to judging the quality of a classifier (Figure~\ref{fig:ROC5}):
+
+<<label=ROC5,fig=TRUE,include=FALSE, echo=TRUE>>=
+pr <- prediction(preds, data.df[,2])
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+auc <- performance(pr, measure = "auc")
+auc@y.values[[1]]
+@
+
+\begin{marginfigure}[0cm]
+\includegraphics[width=1\textwidth]{LR-ROC5}
+\caption{ROC using package \textbf{ROCR}}
+\label{fig:ROC5}
+\setfloatalignment{b}% forces caption to be bottom-aligned
+\end{marginfigure}
+
 
 \newpage
 \textbf{Thanks} \\
