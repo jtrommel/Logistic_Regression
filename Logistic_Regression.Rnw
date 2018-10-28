@@ -1120,20 +1120,24 @@ ROC_curve %>% filter(dist==min(dist))
 
 The package \textbf{ROCR} has a number of usefull functions with regard to judging the quality of a classifier (Figure~\ref{fig:ROC5}):
 
-<<label=ROC5,fig=TRUE,include=FALSE, echo=TRUE>>=
+<<label=ROC5,fig=TRUE,include=FALSE, echo=FALSE>>=
 pr <- prediction(preds, data.df[,2])
-prf <- performance(pr, measure = "tpr", x.measure = "fpr")
-plot(prf)
+par(mfrow=c(2,2))
+plot(performance(pr, measure = "tpr", x.measure = "fpr"))
+plot(performance(pr, measure = "prec", x.measure = "rec"))
+plot(performance(pr, measure = "sens", x.measure = "spec"))
+plot(performance(pr, measure = "lift", x.measure = "rpp"))
+par(mfrow=c(1,1))
 auc <- performance(pr, measure = "auc")
 auc@y.values[[1]]
 @
 
-\begin{marginfigure}[0cm]
+\begin{figure}
 \includegraphics[width=1\textwidth]{LR-ROC5}
-\caption{ROC using package \textbf{ROCR}}
+\caption{Plots using package \textbf{ROCR}}
 \label{fig:ROC5}
 \setfloatalignment{b}% forces caption to be bottom-aligned
-\end{marginfigure}
+\end{figure}
 
 
 \newpage
